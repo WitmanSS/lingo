@@ -1,0 +1,135 @@
+{
+  "nav": {
+    "home": "Home",
+    "texts": "Texts",
+    "addText": "Add Text",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "logout": "Log Out",
+    "profile": "Profile"
+  },
+  "hero": {
+    "title1": "Learn English",
+    "title2": "Through Reading",
+    "highlight": "Reading",
+    "description": "Discover texts matched to your level. From beginner stories to advanced articles—read, learn, and grow with our adaptive learning platform.",
+    "startReading": "Start Reading",
+    "addYourText": "Add Your Text",
+    "stats": {
+      "texts": "500+ Texts",
+      "levels": "4 Levels",
+      "learners": "10K+ Learners"
+    }
+  },
+  "levels": {
+    "title": "Choose Your Level",
+    "subtitle": "From beginner to advanced—find content that matches your skills",
+    "beginner": {
+      "title": "Beginner (A1-A2)",
+      "description": "Simple stories and everyday conversations",
+      "count": "120 texts",
+      "cta": "Explore Beginner"
+    },
+    "intermediate": {
+      "title": "Intermediate (B1-B2)",
+      "description": "Articles and narratives with richer vocabulary",
+      "count": "180 texts",
+      "cta": "Explore Intermediate"
+    },
+    "advanced": {
+      "title": "Advanced (C1-C2)",
+      "description": "Complex literature and academic content",
+      "count": "150 texts",
+      "cta": "Explore Advanced"
+    },
+    "expert": {
+      "title": "Expert (Native)",
+      "description": "Professional and literary masterpieces",
+      "count": "80 texts",
+      "cta": "Explore Expert"
+    }
+  },
+  "howItWorks": {
+    "title": "How LinguaRead Works",
+    "subtitle": "Your journey to English fluency in four simple steps",
+    "steps": {
+      "1": {
+        "title": "Choose Your Level",
+        "description": "Select from 4 difficulty levels that match your current English proficiency. Our smart system adapts recommendations based on your progress."
+      },
+      "2": {
+        "title": "Read & Learn",
+        "description": "Read engaging texts with instant translations, vocabulary highlights, and pronunciation guides. Click any word to learn more."
+      },
+      "3": {
+        "title": "Track Progress",
+        "description": "Monitor your reading streak, vocabulary growth, and comprehension scores. Celebrate milestones as you improve."
+      },
+      "4": {
+        "title": "Add Your Texts",
+        "description": "Contribute by adding your own texts. Help others learn while practicing writing skills. Our community reviews all submissions."
+      }
+    }
+  },
+  "featuredTexts": {
+    "title": "Featured Texts",
+    "subtitle": "Handpicked reading materials for you",
+    "viewAll": "Browse All Texts",
+    "readTime": "min read",
+    "words": "words",
+    "readMore": "Read More"
+  },
+  "stats": {
+    "texts": "Reading Texts",
+    "learners": "Active Learners",
+    "textsRead": "Texts Read",
+    "levels": "Difficulty Levels"
+  },
+  "cta": {
+    "title": "Start Your Reading Journey Today",
+    "description": "Join thousands of learners improving their English through daily reading. It's free to get started.",
+    "primary": "Create Free Account",
+    "secondary": "Explore Texts"
+  },
+  "footer": {
+    "tagline": "Learn English through reading",
+    "quickLinks": "Quick Links",
+    "resources": "Resources",
+    "newsletter": {
+      "title": "Stay Updated",
+      "description": "Get weekly reading recommendations",
+      "placeholder": "Your email address",
+      "button": "Subscribe"
+    },
+    "copyright": "© 2025 LinguaRead. All rights reserved.",
+    "languages": "Languages"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to your account",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signup": "Sign up"
+    },
+    "signup": {
+      "title": "Create an account",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Sign Up",
+      "hasAccount": "Already have an account?",
+      "login": "Sign in"
+    }
+  },
+  "levelsNames": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "expert": "Expert"
+  }
+}

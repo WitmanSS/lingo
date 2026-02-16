@@ -1,0 +1,135 @@
+{
+  "nav": {
+    "home": "Ana Səhifə",
+    "texts": "Mətnlər",
+    "addText": "Mətn Əlavə Et",
+    "about": "Haqqımızda",
+    "contact": "Əlaqə",
+    "login": "Daxil Ol",
+    "signup": "Qeydiyyat",
+    "logout": "Çıxış",
+    "profile": "Profil"
+  },
+  "hero": {
+    "title1": "İngiliscəni",
+    "title2": "Oxumaqla Öyrən",
+    "highlight": "Oxumaqla",
+    "description": "Səviyyənizə uyğun mətnləri kəşf edin. Başlanğıc hekayələrindən tutmuş, peşəkar məqalələrə qədər - oxuyun, öyrənin və inkişaf edin.",
+    "startReading": "Oxumağa Başla",
+    "addYourText": "Öz Mətnini Əlavə Et",
+    "stats": {
+      "texts": "500+ Mətn",
+      "levels": "4 Səviyyə",
+      "learners": "10K+ Tələbə"
+    }
+  },
+  "levels": {
+    "title": "Səviyyənizi Seçin",
+    "subtitle": "Başlanğıcdan peşəkar səviyyəyə qədər - bacarıqlarınıza uyğun məzmun tapın",
+    "beginner": {
+      "title": "Başlanğıc (A1-A2)",
+      "description": "Sadə hekayələr və gündəlik söhbətlər",
+      "count": "120 mətn",
+      "cta": "Başlanğıcı Kəşf Et"
+    },
+    "intermediate": {
+      "title": "Orta (B1-B2)",
+      "description": "Zəngin lüğətli məqalələr və hekayələr",
+      "count": "180 mətn",
+      "cta": "Ortanı Kəşf Et"
+    },
+    "advanced": {
+      "title": "İrəli (C1-C2)",
+      "description": "Mürəkkəb ədəbiyyat və akademik məzmun",
+      "count": "150 mətn",
+      "cta": "İrəlini Kəşf Et"
+    },
+    "expert": {
+      "title": "Peşəkar (Ana Dili)",
+      "description": "Peşəkar və ədəbi şedevrlər",
+      "count": "80 mətn",
+      "cta": "Peşəkarı Kəşf Et"
+    }
+  },
+  "howItWorks": {
+    "title": "LinguaRead Necə İşləyir",
+    "subtitle": "İngilis dili ustalığına gedən yolunuz dörd sadə addımda",
+    "steps": {
+      "1": {
+        "title": "Səviyyənizi Seçin",
+        "description": "Cari ingilis dili biliyinizə uyğun 4 çətinlik səviyyəsindən birini seçin. Ağıllı sistemimiz irəliləyişinizə əsasən tövsiyələri uyğunlaşdırır."
+      },
+      "2": {
+        "title": "Oxuyun və Öyrənin",
+        "description": "Ani tərcümələr, lüğət vurğuları və tələffüz bələdçiləri ilə maraqlı mətnlər oxuyun. Əlavə məlumat üçün hər hansı bir sözə klikləyin."
+      },
+      "3": {
+        "title": "İrəliləyişi İzləyin",
+        "description": "Oxumağa davamını, lüğət artımını və anlama balını izləyin. Təkmilləşdiyinizdə mərhələləri qeyd edin."
+      },
+      "4": {
+        "title": "Öz Mətnlərinizi Əlavə Edin",
+        "description": "Öz mətnlərinizi əlavə edərək töhfə verin. Yazı bacarıqlarınızı praktika edərkən başqalarının öyrənməsinə kömək edin."
+      }
+    }
+  },
+  "featuredTexts": {
+    "title": "Seçilmiş Mətnlər",
+    "subtitle": "Sizin üçün seçilmiş oxu materialları",
+    "viewAll": "Bütün Mətnlərə Bax",
+    "readTime": "dəqiqə oxuma",
+    "words": "söz",
+    "readMore": "Daha çox oxu"
+  },
+  "stats": {
+    "texts": "Oxuma Mətni",
+    "learners": "Aktiv Tələbə",
+    "textsRead": "Oxunmuş Mətn",
+    "levels": "Çətinlik Səviyyəsi"
+  },
+  "cta": {
+    "title": "Bu Gün Oxuma Səyahətinizə Başlayın",
+    "description": "Gündəlik oxuma ilə ingilis dilini təkmilləşdirən minlərlə tələbəyə qoşulun. Başlamaq pulsuzdur.",
+    "primary": "Pulsuz Hesab Yaradın",
+    "secondary": "Mətnləri Kəşf Et"
+  },
+  "footer": {
+    "tagline": "Oxumaqla ingilis dilini öyrənin",
+    "quickLinks": "Sürətli Keçidlər",
+    "resources": "Resurslar",
+    "newsletter": {
+      "title": "Yenilikləri İzləyin",
+      "description": "Həftəlik oxuma tövsiyələri alın",
+      "placeholder": "E-poçt ünvanınız",
+      "button": "Abunə Ol"
+    },
+    "copyright": "© 2025 LinguaRead. Bütün hüquqlar qorunur.",
+    "languages": "Dillər"
+  },
+  "auth": {
+    "login": {
+      "title": "Hesabınıza daxil olun",
+      "email": "E-poçt",
+      "password": "Şifrə",
+      "submit": "Daxil Ol",
+      "noAccount": "Hesabınız yoxdur?",
+      "signup": "Qeydiyyatdan keçin"
+    },
+    "signup": {
+      "title": "Hesab yaradın",
+      "name": "Ad",
+      "email": "E-poçt",
+      "password": "Şifrə",
+      "confirmPassword": "Şifrəni təsdiqləyin",
+      "submit": "Qeydiyyatdan Keç",
+      "hasAccount": "Artıq hesabınız var?",
+      "login": "Daxil olun"
+    }
+  },
+  "levelsNames": {
+    "beginner": "Başlanğıc",
+    "intermediate": "Orta",
+    "advanced": "İrəli",
+    "expert": "Peşəkar"
+  }
+}

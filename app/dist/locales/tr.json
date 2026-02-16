@@ -1,0 +1,135 @@
+{
+  "nav": {
+    "home": "Ana Sayfa",
+    "texts": "Metinler",
+    "addText": "Metin Ekle",
+    "about": "Hakkımızda",
+    "contact": "İletişim",
+    "login": "Giriş Yap",
+    "signup": "Kaydol",
+    "logout": "Çıkış",
+    "profile": "Profil"
+  },
+  "hero": {
+    "title1": "Okuyarak İngilizce",
+    "title2": "Öğrenin",
+    "highlight": "Okuyarak",
+    "description": "Seviyenize uygun metinleri keşfedin. Başlangıç hikayelerinden ileri düzey makalelere kadar — okuyun, öğrenin ve gelişin.",
+    "startReading": "Okumaya Başla",
+    "addYourText": "Metninizi Ekleyin",
+    "stats": {
+      "texts": "500+ Metin",
+      "levels": "4 Seviye",
+      "learners": "10K+ Öğrenci"
+    }
+  },
+  "levels": {
+    "title": "Seviyenizi Seçin",
+    "subtitle": "Başlangıçtan ileri düzeye — becerilerinize uygun içerik bulun",
+    "beginner": {
+      "title": "Başlangıç (A1-A2)",
+      "description": "Basit hikayeler ve günlük konuşmalar",
+      "count": "120 metin",
+      "cta": "Keşfet"
+    },
+    "intermediate": {
+      "title": "Orta (B1-B2)",
+      "description": "Zengin kelime hazineli makaleler ve anlatılar",
+      "count": "180 metin",
+      "cta": "Keşfet"
+    },
+    "advanced": {
+      "title": "İleri (C1-C2)",
+      "description": "Karmaşık edebiyat ve akademik içerik",
+      "count": "150 metin",
+      "cta": "Keşfet"
+    },
+    "expert": {
+      "title": "Uzman (Ana Dil)",
+      "description": "Profesyonel ve edebi şaheserler",
+      "count": "80 metin",
+      "cta": "Keşfet"
+    }
+  },
+  "howItWorks": {
+    "title": "LinguaRead Nasıl Çalışır",
+    "subtitle": "İngilizce akıcılığına giden yolculuğunuz dört basit adımda",
+    "steps": {
+      "1": {
+        "title": "Seviyenizi Seçin",
+        "description": "Mevcut İngilizce yeterliliğinize uygun 4 zorluk seviyesinden birini seçin."
+      },
+      "2": {
+        "title": "Okuyun ve Öğrenin",
+        "description": "Anında çeviriler, kelime vurguları ve telaffuz kılavuzlarıyla metinler okuyun."
+      },
+      "3": {
+        "title": "İlerlemeyi Takip Edin",
+        "description": "Okuma serinizi, kelime hazinenizin büyümesini ve anlama puanlarınızı izleyin."
+      },
+      "4": {
+        "title": "Metinlerinizi Ekleyin",
+        "description": "Kendi metinlerinizi ekleyerek katkıda bulunun. Başkalarının öğrenmesine yardımcı olun."
+      }
+    }
+  },
+  "featuredTexts": {
+    "title": "Öne Çıkan Metinler",
+    "subtitle": "Sizin için seçilmiş okuma materyalleri",
+    "viewAll": "Tüm Metinler",
+    "readTime": "dk okuma",
+    "words": "kelime",
+    "readMore": "Devamını Oku"
+  },
+  "stats": {
+    "texts": "Okuma Metni",
+    "learners": "Aktif Öğrenci",
+    "textsRead": "Okunan Metin",
+    "levels": "Zorluk Seviyesi"
+  },
+  "cta": {
+    "title": "Bugün Okuma Yolculuğunuza Başlayın",
+    "description": "Günlük okuma ile İngilizcesini geliştiren binlerce öğrenciye katılın.",
+    "primary": "Ücretsiz Hesap Oluştur",
+    "secondary": "Metinleri Keşfet"
+  },
+  "footer": {
+    "tagline": "Okuyarak İngilizce öğrenin",
+    "quickLinks": "Hızlı Bağlantılar",
+    "resources": "Kaynaklar",
+    "newsletter": {
+      "title": "Güncel Kalın",
+      "description": "Haftalık okuma önerileri alın",
+      "placeholder": "E-posta adresiniz",
+      "button": "Abone Ol"
+    },
+    "copyright": "© 2025 LinguaRead. Tüm hakları saklıdır.",
+    "languages": "Diller"
+  },
+  "auth": {
+    "login": {
+      "title": "Hesabınıza giriş yapın",
+      "email": "E-posta",
+      "password": "Şifre",
+      "submit": "Giriş Yap",
+      "noAccount": "Hesabınız yok mu?",
+      "signup": "Kaydol"
+    },
+    "signup": {
+      "title": "Hesap oluşturun",
+      "name": "İsim",
+      "email": "E-posta",
+      "password": "Şifre",
+      "confirmPassword": "Şifreyi Onayla",
+      "submit": "Kaydol",
+      "hasAccount": "Zaten hesabınız var mı?",
+      "login": "Giriş yap"
+    }
+  },
+  "levelsNames": {
+    "beginner": "Başlangıç",
+    "intermediate": "Orta",
+    "advanced": "İleri",
+    "expert": "Uzman"
+  }
+}

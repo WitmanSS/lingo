@@ -1,0 +1,326 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Level {
+  A1
+  A2
+  B1
+  B2
+}
+
+// ─── Users ──────────────────────────────────────────
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         Role      @default(USER)
+  avatarUrl    String?   @map("avatar_url")
+  bio          String?
+  xp           Int       @default(0)
+  level        Int       @default(1)
+  streakDays   Int       @default(0) @map("streak_days")
+  lastActiveAt DateTime? @map("last_active_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  stories        Story[]
+  progress       UserProgress[]
+  bookmarks      Bookmark[]
+  favorites      Favorite[]
+  notes          Note[]
+  comments       Comment[]
+  reviews        Review[]
+  quizResults    QuizResult[]
+  readingStats   ReadingStats?
+  achievements   UserAchievement[]
+  userVocabulary UserVocabulary[]
+  refreshTokens  RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ─── Stories ────────────────────────────────────────
+model Story {
+  id                 String   @id @default(uuid())
+  title              String
+  slug               String   @unique
+  content            String
+  level              Level
+  difficultyScore    Float?   @map("difficulty_score")
+  readingTimeMinutes Int      @map("reading_time_minutes")
+  wordCount          Int      @map("word_count")
+  coverImage         String?  @map("cover_image")
+  authorId           String   @map("author_id")
+  published          Boolean  @default(false)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  author     User              @relation(fields: [authorId], references: [id])
+  tags       StoryTag[]
+  vocabulary StoryVocabulary[]
+  progress   UserProgress[]
+  bookmarks  Bookmark[]
+  favorites  Favorite[]
+  notes      Note[]
+  comments   Comment[]
+  reviews    Review[]
+  quizzes    Quiz[]
+
+  @@index([level])
+  @@index([authorId])
+  @@index([slug])
+  @@map("stories")
+}
+
+model Tag {
+  id      String     @id @default(uuid())
+  name    String     @unique
+  stories StoryTag[]
+
+  @@map("tags")
+}
+
+model StoryTag {
+  storyId String @map("story_id")
+  tagId   String @map("tag_id")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, tagId])
+  @@map("story_tags")
+}
+
+// ─── Vocabulary ─────────────────────────────────────
+model Vocabulary {
+  id              String  @id @default(uuid())
+  word            String  @unique
+  definition      String
+  exampleSentence String? @map("example_sentence")
+  phonetic        String?
+  level           Level
+
+  stories        StoryVocabulary[]
+  userVocabulary UserVocabulary[]
+
+  @@index([level])
+  @@map("vocabulary")
+}
+
+model StoryVocabulary {
+  storyId      String @map("story_id")
+  vocabularyId String @map("vocabulary_id")
+
+  story      Story      @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, vocabularyId])
+  @@map("story_vocabulary")
+}
+
+model UserVocabulary {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  vocabularyId   String    @map("vocabulary_id")
+  learned        Boolean   @default(false)
+  reviewCount    Int       @default(0) @map("review_count")
+  lastReviewedAt DateTime? @map("last_reviewed_at")
+  nextReviewAt   DateTime? @map("next_review_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, vocabularyId])
+  @@index([userId])
+  @@map("user_vocabulary")
+}
+
+// ─── Progress & Engagement ──────────────────────────
+model UserProgress {
+  id                 String   @id @default(uuid())
+  userId             String   @map("user_id")
+  storyId            String   @map("story_id")
+  progressPercentage Float    @default(0) @map("progress_percentage")
+  lastPosition       Int      @default(0) @map("last_position")
+  completed          Boolean  @default(false)
+  readingTimeSeconds Int      @default(0) @map("reading_time_seconds")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@index([userId])
+  @@map("user_progress")
+}
+
+model Bookmark {
+  id       String @id @default(uuid())
+  userId   String @map("user_id")
+  storyId  String @map("story_id")
+  position Int    @default(0)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@map("bookmarks")
+}
+
+model Favorite {
+  id      String @id @default(uuid())
+  userId  String @map("user_id")
+  storyId String @map("story_id")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@map("favorites")
+}
+
+model Note {
+  id       String @id @default(uuid())
+  userId   String @map("user_id")
+  storyId  String @map("story_id")
+  text     String
+  position Int    @default(0)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([userId, storyId])
+  @@map("notes")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  storyId   String   @map("story_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@map("comments")
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  storyId    String   @map("story_id")
+  rating     Int
+  reviewText String?  @map("review_text")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@map("reviews")
+}
+
+// ─── Quizzes ────────────────────────────────────────
+model Quiz {
+  id          String @id @default(uuid())
+  storyId     String @map("story_id")
+  question    String
+  explanation String?
+
+  story   Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  options QuizOption[]
+  results QuizResult[]
+
+  @@index([storyId])
+  @@map("quizzes")
+}
+
+model QuizOption {
+  id        String  @id @default(uuid())
+  quizId    String  @map("quiz_id")
+  text      String
+  isCorrect Boolean @default(false) @map("is_correct")
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_options")
+}
+
+model QuizResult {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  quizId    String   @map("quiz_id")
+  score     Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("quiz_results")
+}
+
+// ─── Gamification ───────────────────────────────────
+model ReadingStats {
+  id                String @id @default(uuid())
+  userId            String @unique @map("user_id")
+  totalWordsRead    Int    @default(0) @map("total_words_read")
+  totalReadingTime  Int    @default(0) @map("total_reading_time")
+  storiesCompleted  Int    @default(0) @map("stories_completed")
+  vocabularyLearned Int    @default(0) @map("vocabulary_learned")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reading_stats")
+}
+
+model Achievement {
+  id          String @id @default(uuid())
+  name        String @unique
+  description String
+  icon        String
+  xpReward    Int    @default(0) @map("xp_reward")
+
+  users UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  userId        String   @map("user_id")
+  achievementId String   @map("achievement_id")
+  earnedAt      DateTime @default(now()) @map("earned_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@id([userId, achievementId])
+  @@map("user_achievements")
+}

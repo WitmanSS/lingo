@@ -1,0 +1,718 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum Level {
+  A1
+  A2
+  B1
+  B2
+}
+
+enum DeviceType {
+  MOBILE
+  DESKTOP
+  TABLET
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+// ─── Users ──────────────────────────────────────────
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         Role      @default(USER)
+  avatarUrl    String?   @map("avatar_url")
+  bio          String?
+  xp           Int       @default(0)
+  level        Int       @default(1)
+  streakDays   Int       @default(0) @map("streak_days")
+  lastActiveAt DateTime? @map("last_active_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+  emailVerified Boolean  @default(false) @map("email_verified")
+  twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
+  deletedAt    DateTime? @map("deleted_at") // Soft delete
+
+  // Relations
+  profile         Profile?
+  stories         Story[]
+  progress        ReadingProgress[]
+  bookmarks       Bookmark[]
+  favorites       Favorite[]
+  notes           Note[]
+  comments        Comment[]
+  reviews         Review[]
+  ratings         Rating[]
+  quizResults     QuizResult[]
+  readingStats    ReadingStats?
+  achievements    UserAchievement[]
+  userVocabulary  UserVocabulary[]
+  refreshTokens   RefreshToken[]
+  sessions        Session[]
+  devices         Device[]
+  payments        Payment[]
+  subscriptions   Subscription[]
+  notifications   Notification[]
+  adminLogs       AdminLog[]
+  auditLogs       AuditLog[]
+
+  @@index([email])
+  @@index([username])
+  @@index([role])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Profile {
+  id       String @id @default(uuid())
+  userId   String @unique @map("user_id")
+  firstName String? @map("first_name")
+  lastName  String? @map("last_name")
+  phone     String?
+  country   String?
+  language  String?
+  timezone  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("profiles")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  deviceId  String?  @map("device_id")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device Device? @relation(fields: [deviceId], references: [id])
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  deviceId  String?  @map("device_id")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device Device? @relation(fields: [deviceId], references: [id])
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+model Device {
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
+  deviceId    String     @map("device_id")
+  deviceType  DeviceType
+  deviceName  String?    @map("device_name")
+  os          String?
+  browser     String?
+  ipAddress   String?    @map("ip_address")
+  lastLoginAt DateTime?  @map("last_login_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens  RefreshToken[]
+  sessions       Session[]
+
+  @@index([userId])
+  @@index([deviceId])
+  @@map("devices")
+}
+
+// ─── Stories ────────────────────────────────────────
+model Story {
+  id                 String   @id @default(uuid())
+  title              String
+  slug               String   @unique
+  level              Level
+  difficultyScore    Float?   @map("difficulty_score")
+  readingTimeMinutes Int      @map("reading_time_minutes")
+  wordCount          Int      @map("word_count")
+  coverImage         String?  @map("cover_image")
+  authorId           String   @map("author_id")
+  published          Boolean  @default(false)
+  isAIGenerated      Boolean  @default(false) @map("is_ai_generated")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at") // Soft delete
+
+  // Relations
+  author       User                @relation(fields: [authorId], references: [id])
+  content      StoryContent?
+  chapters     StoryChapter[]
+  tags         StoryTag[]
+  vocabulary   StoryVocabulary[]
+  progress     ReadingProgress[]
+  bookmarks    Bookmark[]
+  favorites    Favorite[]
+  notes        Note[]
+  comments     Comment[]
+  reviews      Review[]
+  ratings      Rating[]
+  quizzes      Quiz[]
+  translations StoryTranslation[]
+  audio        StoryAudio?
+  aiStory      AIStory?
+
+  @@index([level])
+  @@index([authorId])
+  @@index([slug])
+  @@index([published])
+  @@index([deletedAt])
+  @@map("stories")
+}
+
+model StoryContent {
+  id      String @id @default(uuid())
+  storyId String @unique @map("story_id")
+  content String @db.Text
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@map("story_contents")
+}
+
+model StoryChapter {
+  id          String  @id @default(uuid())
+  storyId     String  @map("story_id")
+  title       String
+  content     String  @db.Text
+  order       Int
+  wordCount   Int     @map("word_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@index([order])
+  @@map("story_chapters")
+}
+
+model StoryTag {
+  storyId String @map("story_id")
+  tagId   String @map("tag_id")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, tagId])
+  @@index([storyId])
+  @@index([tagId])
+  @@map("story_tags")
+}
+
+model Tag {
+  id      String     @id @default(uuid())
+  name    String     @unique
+  stories StoryTag[]
+
+  @@index([name])
+  @@map("tags")
+}
+
+model StoryVocabulary {
+  storyId     String @map("story_id")
+  vocabularyId String @map("vocabulary_id")
+
+  story      Story      @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, vocabularyId])
+  @@index([storyId])
+  @@index([vocabularyId])
+  @@map("story_vocabulary")
+}
+
+model StoryTranslation {
+  id          String   @id @default(uuid())
+  storyId     String   @map("story_id")
+  languageCode String  @map("language_code")
+  title       String
+  content     String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@index([languageCode])
+  @@map("story_translations")
+}
+
+model StoryAudio {
+  id        String   @id @default(uuid())
+  storyId   String   @unique @map("story_id")
+  audioUrl  String   @map("audio_url")
+  duration  Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@map("story_audio")
+}
+
+model AIStory {
+  id            String   @id @default(uuid())
+  storyId       String   @unique @map("story_id")
+  prompt        String   @db.Text
+  model         String
+  tokensUsed    Int      @map("tokens_used")
+  generationTime Int     @map("generation_time")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@map("ai_stories")
+}
+
+// ─── Vocabulary ─────────────────────────────────────
+model Vocabulary {
+  id          String  @id @default(uuid())
+  word        String
+  definition  String  @db.Text
+  exampleSentence String? @map("example_sentence")
+  phonetic    String?
+  level       Level
+  audioUrl    String? @map("audio_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  stories         StoryVocabulary[]
+  userVocabulary  UserVocabulary[]
+
+  @@index([word])
+  @@index([level])
+  @@map("vocabulary")
+}
+
+model UserVocabulary {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  vocabularyId String  @map("vocabulary_id")
+  learned     Boolean  @default(false)
+  reviewCount Int      @default(0) @map("review_count")
+  lastReviewedAt DateTime? @map("last_reviewed_at")
+  nextReviewAt   DateTime? @map("next_review_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([vocabularyId])
+  @@index([learned])
+  @@map("user_vocabulary")
+}
+
+// ─── Progress & Engagement ──────────────────────────
+model ReadingProgress {
+  id                String   @id @default(uuid())
+  userId            String   @map("user_id")
+  storyId           String   @map("story_id")
+  progressPercentage Float    @map("progress_percentage")
+  lastPosition      Int      @map("last_position")
+  completed         Boolean  @default(false)
+  readingTimeSeconds Int     @default(0) @map("reading_time_seconds")
+  startedAt         DateTime @default(now()) @map("started_at")
+  completedAt       DateTime? @map("completed_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@index([userId])
+  @@index([storyId])
+  @@index([completed])
+  @@map("reading_progress")
+}
+
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  storyId   String   @map("story_id")
+  position  Int
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([storyId])
+  @@map("bookmarks")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  storyId   String   @map("story_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@index([userId])
+  @@index([storyId])
+  @@map("favorites")
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  storyId   String   @map("story_id")
+  text      String   @db.Text
+  position  Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([storyId])
+  @@map("notes")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  storyId   String   @map("story_id")
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story   Story     @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentReplies")
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  parentId String?  @map("parent_id")
+
+  @@index([userId])
+  @@index([storyId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  storyId   String   @map("story_id")
+  rating    Int
+  reviewText String? @db.Text @map("review_text")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@index([userId])
+  @@index([storyId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+model Rating {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  storyId   String   @map("story_id")
+  rating    Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storyId])
+  @@index([userId])
+  @@index([storyId])
+  @@index([rating])
+  @@map("ratings")
+}
+
+// ─── Gamification ───────────────────────────────────
+model Achievement {
+  id          String  @id @default(uuid())
+  name        String
+  description String  @db.Text
+  icon        String
+  xpReward    Int     @map("xp_reward")
+  category    String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  userAchievements UserAchievement[]
+
+  @@index([category])
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  achievementId String   @map("achievement_id")
+  earnedAt      DateTime @default(now()) @map("earned_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@map("user_achievements")
+}
+
+model ReadingStats {
+  id                String   @id @default(uuid())
+  userId            String   @unique @map("user_id")
+  totalWordsRead    Int      @default(0) @map("total_words_read")
+  totalReadingTime  Int      @default(0) @map("total_reading_time")
+  storiesCompleted  Int      @default(0) @map("stories_completed")
+  vocabularyLearned Int      @default(0) @map("vocabulary_learned")
+  currentStreak     Int      @default(0) @map("current_streak")
+  longestStreak     Int      @default(0) @map("longest_streak")
+  lastActivityAt    DateTime? @map("last_activity_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("reading_stats")
+}
+
+model Leaderboard {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  xp        Int
+  level     Int
+  rank      Int
+  period    String   // daily, weekly, monthly, all-time
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([period])
+  @@index([rank])
+  @@map("leaderboards")
+}
+
+// ─── Payments & Subscriptions ───────────────────────
+model Subscription {
+  id            String             @id @default(uuid())
+  userId        String             @map("user_id")
+  planId        String             @map("plan_id")
+  status        SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime      @map("current_period_start")
+  currentPeriodEnd   DateTime      @map("current_period_end")
+  cancelAtPeriodEnd  Boolean       @default(false) @map("cancel_at_period_end")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  userId        String        @map("user_id")
+  subscriptionId String?      @map("subscription_id")
+  amount        Float
+  currency      String        @default("USD")
+  status        PaymentStatus @default(PENDING)
+  paymentMethod String        @map("payment_method")
+  transactionId String?       @unique @map("transaction_id")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@map("payments")
+}
+
+// ─── Notifications & Audit ──────────────────────────
+model Notification {
+  id        String   @id @default(uuid())
+  type      String
+  message   String   @db.Text
+  storyId   String?  @map("story_id")
+  userId    String?  @map("user_id")
+  adminId   String?  @map("admin_id")
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  story Story? @relation(fields: [storyId], references: [id])
+  user  User?  @relation("notificationUser", fields: [userId], references: [id])
+  admin User?  @relation("notificationAdmin", fields: [adminId], references: [id])
+
+  @@index([storyId])
+  @@index([userId])
+  @@index([adminId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model AdminLog {
+  id        String   @id @default(uuid())
+  adminId   String   @map("admin_id")
+  action    String
+  entityType String  @map("entity_type")
+  entityId  String   @map("entity_id")
+  details   String?  @db.Text
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([entityType])
+  @@index([entityId])
+  @@map("admin_logs")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String?  @map("entity_id")
+  oldValues   String?  @db.Text @map("old_values")
+  newValues   String?  @db.Text @map("new_values")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([entityId])
+  @@map("audit_logs")
+}
+
+// ─── Quizzes & Languages ────────────────────────────
+model Quiz {
+  id         String      @id @default(uuid())
+  storyId    String      @map("story_id")
+  question   String      @db.Text
+  explanation String?    @db.Text
+  options    QuizOption[]
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@map("quizzes")
+}
+
+model QuizOption {
+  id        String @id @default(uuid())
+  quizId    String @map("quiz_id")
+  text      String @db.Text
+  isCorrect Boolean @default(false) @map("is_correct")
+  order     Int
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@map("quiz_options")
+}
+
+model QuizResult {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  quizId    String   @map("quiz_id")
+  score     Float
+  answers   String   @db.Text // JSON string of answers
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([quizId])
+  @@map("quiz_results")
+}
+
+model Language {
+  id       String @id @default(uuid())
+  code     String @unique
+  name     String
+  flag     String
+  isActive Boolean @default(true) @map("is_active")
+
+  @@index([code])
+  @@index([isActive])
+  @@map("languages")
+}
+
+model Translation {
+  id          String   @id @default(uuid())
+  key         String
+  languageCode String  @map("language_code")
+  value       String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([key, languageCode])
+  @@index([languageCode])
+  @@map("translations")
+}

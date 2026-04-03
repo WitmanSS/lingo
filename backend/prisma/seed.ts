@@ -6,6 +6,31 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
+  // Create languages
+  const languages = await Promise.all([
+    prisma.language.upsert({
+      where: { code: 'en' },
+      update: {},
+      create: { code: 'en', name: 'English', flag: '🇬🇧', isActive: true },
+    }),
+    prisma.language.upsert({
+      where: { code: 'az' },
+      update: {},
+      create: { code: 'az', name: 'Azerbaijani', flag: '🇦🇿', isActive: true },
+    }),
+    prisma.language.upsert({
+      where: { code: 'tr' },
+      update: {},
+      create: { code: 'tr', name: 'Turkish', flag: '🇹🇷', isActive: true },
+    }),
+    prisma.language.upsert({
+      where: { code: 'ru' },
+      update: {},
+      create: { code: 'ru', name: 'Russian', flag: '🇷🇺', isActive: true },
+    }),
+  ]);
+  console.log(`  ✅ ${languages.length} languages created`);
+
   // Create admin user
   const adminPassword = await bcrypt.hash('admin123', 10);
   const admin = await prisma.user.upsert({
@@ -16,7 +41,26 @@ async function main() {
       email: 'admin@linguaread.com',
       passwordHash: adminPassword,
       role: Role.ADMIN,
-      readingStats: { create: {} },
+      level: 10,
+      xp: 5000,
+      profile: {
+        create: {
+          firstName: 'Admin',
+          lastName: 'User',
+          country: 'Global',
+          timezone: 'UTC',
+        },
+      },
+      readingStats: {
+        create: {
+          totalWordsRead: 50000,
+          totalReadingTime: 10000,
+          storiesCompleted: 25,
+          vocabularyLearned: 500,
+          currentStreak: 30,
+          longestStreak: 100,
+        },
+      },
     },
   });
   console.log(`  ✅ Admin user: admin@linguaread.com / admin123`);
@@ -31,7 +75,27 @@ async function main() {
       email: 'user@example.com',
       passwordHash: userPassword,
       role: Role.USER,
-      readingStats: { create: {} },
+      level: 3,
+      xp: 1500,
+      streakDays: 15,
+      profile: {
+        create: {
+          firstName: 'Test',
+          lastName: 'User',
+          country: 'USA',
+          timezone: 'America/New_York',
+        },
+      },
+      readingStats: {
+        create: {
+          totalWordsRead: 8000,
+          totalReadingTime: 1200,
+          storiesCompleted: 4,
+          vocabularyLearned: 120,
+          currentStreak: 15,
+          longestStreak: 25,
+        },
+      },
     },
   });
   console.log(`  ✅ Test user: user@example.com / user123456`);
@@ -105,7 +169,11 @@ async function main() {
       create: {
         title: storyData.title,
         slug: storyData.slug,
-        content: storyData.content,
+        content: {
+          create: {
+            content: storyData.content,
+          },
+        },
         level: storyData.level,
         wordCount,
         readingTimeMinutes,
@@ -121,21 +189,25 @@ async function main() {
 
   // Create achievements
   const achievements = [
-    { name: 'First Story', description: 'Complete your first story', icon: '📖', xpReward: 50 },
-    { name: 'Bookworm', description: 'Complete 10 stories', icon: '📚', xpReward: 200 },
-    { name: 'Word Collector', description: 'Learn 100 vocabulary words', icon: '🔤', xpReward: 300 },
-    { name: 'Speed Reader', description: 'Read 10,000 words', icon: '⚡', xpReward: 150 },
-    { name: 'Streak Master', description: 'Maintain a 7-day reading streak', icon: '🔥', xpReward: 100 },
-    { name: 'Quiz Champion', description: 'Score 100% on 5 quizzes', icon: '🏆', xpReward: 250 },
-    { name: 'Explorer', description: 'Read stories from all 4 levels', icon: '🌍', xpReward: 200 },
+    { name: 'First Story', description: 'Complete your first story', icon: '📖', xpReward: 50, category: 'reading' },
+    { name: 'Bookworm', description: 'Complete 10 stories', icon: '📚', xpReward: 200, category: 'reading' },
+    { name: 'Word Collector', description: 'Learn 100 vocabulary words', icon: '🔤', xpReward: 300, category: 'vocabulary' },
+    { name: 'Speed Reader', description: 'Read 10,000 words', icon: '⚡', xpReward: 150, category: 'reading' },
+    { name: 'Streak Master', description: 'Maintain a 7-day reading streak', icon: '🔥', xpReward: 100, category: 'consistency' },
+    { name: 'Quiz Champion', description: 'Score 100% on 5 quizzes', icon: '🏆', xpReward: 250, category: 'learning' },
+    { name: 'Explorer', description: 'Read stories from all 4 levels', icon: '🌍', xpReward: 200, category: 'progression' },
   ];
 
   for (const ach of achievements) {
-    await prisma.achievement.upsert({
+    const existing = await prisma.achievement.findFirst({
       where: { name: ach.name },
-      update: {},
-      create: ach,
     });
+    
+    if (!existing) {
+      await prisma.achievement.create({
+        data: ach,
+      });
+    }
   }
   console.log(`  ✅ ${achievements.length} achievements created`);
 
@@ -152,11 +224,15 @@ async function main() {
   ];
 
   for (const w of words) {
-    await prisma.vocabulary.upsert({
+    const existing = await prisma.vocabulary.findFirst({
       where: { word: w.word },
-      update: {},
-      create: w,
     });
+    
+    if (!existing) {
+      await prisma.vocabulary.create({
+        data: w,
+      });
+    }
   }
   console.log(`  ✅ ${words.length} vocabulary words created`);
 

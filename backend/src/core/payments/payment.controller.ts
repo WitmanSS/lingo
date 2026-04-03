@@ -9,9 +9,9 @@ import {
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { JwtGuard } from '../../common/guards/jwt.guard';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
-@Controller('api/v1/payments')
+@Controller('payments')
 @UseGuards(JwtGuard)
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}

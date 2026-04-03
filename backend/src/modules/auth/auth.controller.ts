@@ -4,88 +4,49 @@ import {
   Body,
   UseGuards,
   Get,
-  BadRequestException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtGuard } from '../../common/guards/jwt.guard';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { Public } from '../../auth/decorators/public.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import { RegisterDto, LoginDto, RefreshTokenDto } from './dto';
 
-@Controller('api/v1/auth')
+@Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
   @Public()
-  async register(
-    @Body() body: { email: string; username: string; password: string },
-  ) {
-    if (!body.email || !body.username || !body.password) {
-      throw new BadRequestException('Missing required fields');
-    }
-
-    const user = await this.authService.register(
-      body.email,
-      body.username,
-      body.password,
-    );
-
-    return {
-      success: true,
-      message: 'User registered successfully',
-      data: user,
-    };
+  async register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
   @Post('login')
   @Public()
-  async login(@Body() body: { email: string; password: string }) {
-    if (!body.email || !body.password) {
-      throw new BadRequestException('Email and password are required');
-    }
-
-    const result = await this.authService.login(body.email, body.password);
-
-    return {
-      success: true,
-      message: 'Login successful',
-      data: result,
-    };
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() dto: LoginDto) {
+    return this.authService.login(dto.email, dto.password);
   }
 
   @Post('refresh')
   @Public()
-  async refreshToken(@Body() body: { refreshToken: string }) {
-    if (!body.refreshToken) {
-      throw new BadRequestException('Refresh token is required');
-    }
-
-    const tokens = await this.authService.refreshToken(body.refreshToken);
-
-    return {
-      success: true,
-      data: tokens,
-    };
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(@Body() dto: RefreshTokenDto) {
+    return this.authService.refreshToken(dto.refreshToken);
   }
 
   @Post('logout')
   @UseGuards(JwtGuard)
-  async logout(@CurrentUser() user: any) {
-    const result = await this.authService.logout(user.id);
-
-    return {
-      success: true,
-      message: 'Logged out successfully',
-      data: result,
-    };
+  @HttpCode(HttpStatus.OK)
+  async logout(@CurrentUser() user: { id: string }) {
+    return this.authService.logout(user.id);
   }
 
   @Get('me')
   @UseGuards(JwtGuard)
-  async getCurrentUser(@CurrentUser() user: any) {
-    return {
-      success: true,
-      data: user,
-    };
+  async getCurrentUser(@CurrentUser() user: Record<string, unknown>) {
+    return user;
   }
 }

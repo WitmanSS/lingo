@@ -1,0 +1,10 @@
+node_modules
+dist
+dev.db
+.env
+.env.local
+.git
+*.md
+.vscode
+coverage
+test

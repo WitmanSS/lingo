@@ -6,15 +6,15 @@ export class CreateStoryDto {
   @IsNotEmpty({ message: 'Title is required' })
   @MinLength(3, { message: 'Title must be at least 3 characters' })
   @MaxLength(200, { message: 'Title must not exceed 200 characters' })
-  title: string;
+  title!: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Content is required' })
   @MinLength(50, { message: 'Content must be at least 50 characters' })
-  content: string;
+  content!: string;
 
   @IsEnum(Level, { message: 'Level must be one of: A1, A2, B1, B2' })
-  level: Level;
+  level!: Level;
 
   @IsOptional()
   @IsString()

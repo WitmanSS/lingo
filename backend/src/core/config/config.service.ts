@@ -1,12 +1,30 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AppConfigService {
-  constructor(private configService: ConfigService) {}
+  private readonly logger = new Logger(AppConfigService.name);
+
+  constructor(private configService: ConfigService) {
+    this.validateRequiredConfig();
+  }
+
+  private validateRequiredConfig() {
+    if (this.nodeEnv === 'production') {
+      const required = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'DATABASE_URL'];
+      const missing = required.filter(
+        (key) => !this.configService.get<string>(key) || this.configService.get<string>(key)?.includes('dev-'),
+      );
+      if (missing.length > 0) {
+        throw new Error(
+          `Missing or insecure environment variables for production: ${missing.join(', ')}`,
+        );
+      }
+    }
+  }
 
   get databaseUrl(): string {
-    return this.configService.get<string>('DATABASE_URL') || 'file:./dev.db';
+    return this.configService.get<string>('DATABASE_URL') || 'postgresql://linguaread:linguaread_pass@localhost:5432/linguaread';
   }
 
   getJwtSecret(): string {
@@ -42,11 +60,19 @@ export class AppConfigService {
   }
 
   getGoogleCallbackUrl(): string {
-    return this.configService.get<string>('GOOGLE_CALLBACK_URL') || 'http://localhost:3000/auth/google/callback';
+    return this.configService.get<string>('GOOGLE_CALLBACK_URL') || 'http://localhost:3000/api/v1/auth/google/callback';
   }
 
   get nodeEnv(): string {
     return this.configService.get<string>('NODE_ENV', 'development');
+  }
+
+  get isProduction(): boolean {
+    return this.nodeEnv === 'production';
+  }
+
+  get isDevelopment(): boolean {
+    return this.nodeEnv === 'development';
   }
 
   get bcryptRounds(): number {

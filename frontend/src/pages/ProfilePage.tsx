@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { BookOpen, Clock, Award, Flame, TrendingUp, Star } from 'lucide-react';
+import { BookOpen, Clock, Award, Flame } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import { LevelBadge, XpProgressBar } from '@/components/gamification/GamificationWidgets';
 
 // Placeholder stats
 const placeholderStats = {
@@ -39,18 +40,14 @@ export default function ProfilePage() {
                 {user?.email || t('profile.loginPrompt', 'Log in to track your progress')}
               </p>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 text-sm">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span className="font-medium">{t('profile.level', 'Level')} {user?.level || 1}</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm">
-                  <TrendingUp className="w-4 h-4 text-lingua-primary" />
-                  <span className="font-medium">{user?.xp || 0} XP</span>
-                </div>
-                <div className="flex items-center gap-1 text-sm">
+                <LevelBadge level={user?.level || 1} xp={user?.xp || 0} />
+                <div className="flex items-center gap-1 text-sm bg-orange-50 text-orange-600 px-3 py-1.5 rounded-full border border-orange-200">
                   <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="font-medium">{user?.streakDays || 0} {t('profile.dayStreak', 'day streak')}</span>
+                  <span className="font-bold">{user?.streakDays || 0} {t('profile.dayStreak', 'day streak')}</span>
                 </div>
+              </div>
+              <div className="mt-4 max-w-sm">
+                <XpProgressBar currentXp={user?.xp || 0} nextLevelXp={(user?.level || 1) * 1000 + 500} />
               </div>
             </div>
           </div>

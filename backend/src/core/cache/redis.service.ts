@@ -54,4 +54,29 @@ export class RedisService implements OnModuleDestroy {
   async hdel(key: string, field: string): Promise<void> {
     await this.redis.hdel(key, field);
   }
+
+  // --- Sorted Sets (Leaderboards) ---
+  async zadd(key: string, score: number, member: string): Promise<void> {
+    await this.redis.zadd(key, score, member);
+  }
+
+  async zrevrange(key: string, start: number, stop: number, withScores = false): Promise<string[]> {
+    if (withScores) {
+      return this.redis.zrevrange(key, start, stop, 'WITHSCORES');
+    }
+    return this.redis.zrevrange(key, start, stop);
+  }
+
+  async zrevrank(key: string, member: string): Promise<number | null> {
+    return this.redis.zrevrank(key, member);
+  }
+
+  async zscore(key: string, member: string): Promise<string | null> {
+    return this.redis.zscore(key, member);
+  }
+
+  // Allow raw instance access for complex pipelines
+  getClient(): Redis {
+    return this.redis;
+  }
 }

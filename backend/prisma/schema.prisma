@@ -83,6 +83,10 @@ model User {
   adminNotifications Notification[] @relation("notificationAdmin")
   auditLogs       AuditLog[]
   leaderboards    Leaderboard[]
+  xpLogs          XpLog[]
+  warnings        UserWarning[]
+  blocks          UserBlock[]
+  storyReports    StoryReport[]
 
   @@index([email])
   @@index([username])
@@ -199,6 +203,7 @@ model Story {
   audio        StoryAudio?
   aiStory      AIStory?
   notifications Notification[]
+  storyReports  StoryReport[]
 
   @@index([level])
   @@index([authorId])
@@ -719,4 +724,75 @@ model Translation {
   @@unique([key, languageCode])
   @@index([languageCode])
   @@map("translations")
+}
+
+// ─── Gamification Expansion ──────────────────────────
+model LevelTable {
+  level       Int      @id
+  name        String
+  xpRequired  Int      @map("xp_required")
+  iconUrl     String?  @map("icon_url")
+  description String?
+
+  @@map("level_table")
+}
+
+model XpLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  amount    Int
+  reason    String   // e.g., 'READ_STORY', 'WRITE_STORY', 'DAILY_STREAK'
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("xp_logs")
+}
+
+// ─── Admin & Moderation Expansion ────────────────────
+model UserWarning {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  adminId   String   @map("admin_id")
+  reason    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([adminId])
+  @@map("user_warnings")
+}
+
+model UserBlock {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  adminId   String   @map("admin_id")
+  reason    String
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([adminId])
+  @@map("user_blocks")
+}
+
+model StoryReport {
+  id          String   @id @default(uuid())
+  storyId     String   @map("story_id")
+  reporterId  String   @map("reporter_id")
+  reason      String
+  status      String   @default("PENDING") // PENDING, REVIEWED, DISMISSED
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  story       Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  reporter    User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@index([reporterId])
+  @@map("story_reports")
 }

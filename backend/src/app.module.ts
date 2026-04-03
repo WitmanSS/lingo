@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { TerminusModule } from '@nestjs/terminus';
+import { ScheduleModule } from '@nestjs/schedule';
 
 // Core
 import { AppConfigModule } from './core/config/config.module';
@@ -13,9 +16,11 @@ import { SearchModule } from './core/search/search.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { ValidationPipe } from './common/pipes/validation.pipe';
 import { JwtGuard } from './common/guards/jwt.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+
+// Health
+import { HealthController } from './core/health/health.controller';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -33,12 +38,27 @@ import { QuizzesModule } from './modules/quizzes/quizzes.module';
 
 @Module({
   imports: [
+    // Scheduling
+    ScheduleModule.forRoot(),
+
+    // Rate limiting
+    ThrottlerModule.forRoot([{
+      ttl: 60000,   // 1 minute window
+      limit: 100,   // 100 requests per minute
+    }]),
+
+    // Health checks
+    TerminusModule,
+
+    // Core
     AppConfigModule,
     PrismaModule,
     RedisModule,
     AIModule,
     PaymentModule,
     SearchModule,
+
+    // Feature modules
     AuthModule,
     UsersModule,
     StoriesModule,
@@ -52,27 +72,34 @@ import { QuizzesModule } from './modules/quizzes/quizzes.module';
     ProgressModule,
     QuizzesModule,
   ],
+  controllers: [HealthController],
   providers: [
+    // Global exception filter
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
     },
+    // Request logging
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
+    // Standardized response format
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
     },
+    // Rate limiting guard
     {
-      provide: APP_PIPE,
-      useClass: ValidationPipe,
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
+    // JWT authentication guard (global)
     {
       provide: APP_GUARD,
       useClass: JwtGuard,
     },
+    // Role-based access control guard
     {
       provide: APP_GUARD,
       useClass: RolesGuard,

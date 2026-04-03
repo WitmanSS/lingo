@@ -23,16 +23,16 @@ export const storiesApi = {
 
   // Admin endpoints
   async create(data: CreateStoryRequest): Promise<Story> {
-    const res = await api.post<Story>('/admin/stories', data);
+    const res = await api.post<Story>('/stories', data);
     return res.data;
   },
 
   async update(id: string, data: Partial<CreateStoryRequest>): Promise<Story> {
-    const res = await api.put<Story>(`/admin/stories/${id}`, data);
+    const res = await api.put<Story>(`/stories/${id}`, data);
     return res.data;
   },
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/admin/stories/${id}`);
+    await api.delete(`/stories/${id}`);
   },
 };

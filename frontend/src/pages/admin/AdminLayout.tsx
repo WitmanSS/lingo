@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, BookOpen, ShieldAlert, BarChart3, Activity, ArrowLeft } from 'lucide-react';
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';

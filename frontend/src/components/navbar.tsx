@@ -52,6 +52,7 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/stories', label: t('nav.texts') },
+    { href: '/leaderboards', label: t('nav.leaderboards', 'Leaderboards') },
     { href: '/#how-it-works', label: t('nav.about') },
     { href: '/#contact', label: t('nav.contact') },
   ];

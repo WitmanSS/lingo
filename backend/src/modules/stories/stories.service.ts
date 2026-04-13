@@ -3,6 +3,7 @@ import { PrismaService } from '../../core/database/prisma.service';
 import { Level, Prisma } from '@prisma/client';
 import { CreateStoryDto, UpdateStoryDto, QueryStoriesDto } from './dto';
 import { XpService, XpReason } from '../gamification/xp.service';
+import { ModerationPriorityService } from '../admin/moderation-priority.service';
 
 @Injectable()
 export class StoriesService {
@@ -11,6 +12,7 @@ export class StoriesService {
   constructor(
     private prisma: PrismaService,
     private xpService: XpService,
+    private moderationPriorityService: ModerationPriorityService,
   ) {}
 
   async findAll(params: QueryStoriesDto) {
@@ -101,7 +103,8 @@ export class StoriesService {
     const wordCount = dto.content.split(/\s+/).filter(Boolean).length;
     const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
 
-    const story = await this.prisma.story.create({
+    // Basic creation with initially published = false if moderation triggers later
+    let story = await this.prisma.story.create({
       data: {
         title: dto.title,
         slug,
@@ -113,7 +116,7 @@ export class StoriesService {
         readingTimeMinutes,
         coverImage: dto.coverImage,
         authorId,
-        published: true,
+        published: true, // Optimistically publish
         tags: dto.tagIds ? {
           create: dto.tagIds.map((tagId) => ({ tagId })),
         } : undefined,
@@ -124,8 +127,35 @@ export class StoriesService {
       },
     });
 
-    // Grant XP to author
-    await this.xpService.grantXp(authorId, XpReason.WRITE_STORY);
+    // Run Moderation Priority Scan
+    const scanResult = await this.moderationPriorityService.scanStoryContent(story.id, dto.content);
+    
+    if (scanResult.flag) {
+      this.logger.warn(`Story ${story.id} auto-flagged [${scanResult.priority}]`);
+      
+      story = await this.prisma.story.update({
+         where: { id: story.id },
+         data: { published: false }, // Unpublish high-risk stories automatically
+         include: {
+            author: { select: { id: true, username: true } },
+            tags: { include: { tag: true } },
+         }
+      });
+
+      // Systemic Report insertion
+      await this.prisma.storyReport.create({
+         data: {
+            storyId: story.id,
+            reporterId: authorId, // Mark author as reporter for systemic triggers
+            reason: `[SYSTEM AUTO-FLAG] Priority: ${scanResult.priority} | Reason: ${scanResult.reason}`,
+         }
+      });
+    }
+
+    // Grant XP to author (Only if not flagged or maybe we give it anyway and retract later?? Let's say we only give XP if published)
+    if (!scanResult.flag) {
+       await this.xpService.grantXp(authorId, XpReason.WRITE_STORY);
+    }
 
     this.logger.log(`Story created: ${story.title} (${story.id})`);
     return {

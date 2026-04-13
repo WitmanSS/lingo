@@ -1,18 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Activity, Users, BookOpen, Clock } from 'lucide-react';
 import api from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
+  const [growthData, setGrowthData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await api.get('/admin/dashboard');
-        setStats(res.data);
+        const [dashRes, growthRes] = await Promise.all([
+          api.get('/admin/dashboard'),
+          api.get('/admin/growth')
+        ]);
+        setStats(dashRes.data);
+        setGrowthData(growthRes.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -80,21 +86,35 @@ export default function DashboardPage() {
             <Clock className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-             <div className="text-2xl font-bold text-green-600">Optimal</div>
+             <div className="text-2xl font-bold text-green-600">{stats?.systemHealth || 'Optimal'}</div>
              <p className="text-xs text-muted-foreground">All systems operational</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-8">
-        <Card className="col-span-4">
+        <Card className="col-span-1 md:col-span-2 lg:col-span-7">
           <CardHeader>
-             <CardTitle>Recent Activity</CardTitle>
-             <CardDescription>Metrics from the last 7 days.</CardDescription>
+             <CardTitle>Platform Growth</CardTitle>
+             <CardDescription>Visualizing recent user registrations over time.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] w-full bg-slate-100 rounded-md border flex items-center justify-center text-muted-foreground">
-               [Metrics Graph Placeholder]
+            <div className="h-[300px] w-full">
+               <ResponsiveContainer width="100%" height="100%">
+                 <AreaChart data={growthData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                   <defs>
+                     <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                       <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                       <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                     </linearGradient>
+                   </defs>
+                   <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                   <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                   <Tooltip />
+                   <Area type="monotone" dataKey="newUsers" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorUsers)" />
+                 </AreaChart>
+               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>

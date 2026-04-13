@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
 import { LevelService } from './level.service';
+import { XpValidationService } from './xp-validation.service';
 
 export enum XpReason {
   READ_STORY = 'READ_STORY',
@@ -9,15 +10,19 @@ export enum XpReason {
   WEEKLY_STREAK = 'WEEKLY_STREAK',
   STORY_APPROVED = 'STORY_APPROVED',
   VOCABULARY_LEARNED = 'VOCABULARY_LEARNED',
+  COMMENT_ADDED = 'COMMENT_ADDED',
+  STORY_LIKED = 'STORY_LIKED',
 }
 
 export const XP_AWARDS = {
-  [XpReason.READ_STORY]: 50,
-  [XpReason.WRITE_STORY]: 100,
-  [XpReason.DAILY_STREAK]: 20,
-  [XpReason.WEEKLY_STREAK]: 100,
-  [XpReason.STORY_APPROVED]: 30,
-  [XpReason.VOCABULARY_LEARNED]: 10,
+  [XpReason.READ_STORY]: 40,
+  [XpReason.WRITE_STORY]: 120,
+  [XpReason.DAILY_STREAK]: 25,
+  [XpReason.WEEKLY_STREAK]: 150,
+  [XpReason.STORY_APPROVED]: 50,
+  [XpReason.VOCABULARY_LEARNED]: 15,
+  [XpReason.COMMENT_ADDED]: 5,
+  [XpReason.STORY_LIKED]: 2,
 };
 
 @Injectable()
@@ -27,14 +32,21 @@ export class XpService {
   constructor(
     private prisma: PrismaService,
     private levelService: LevelService,
+    private xpValidator: XpValidationService,
   ) {}
 
   /**
    * Grant XP to a user and check for level ups
    */
-  async grantXp(userId: string, reason: XpReason, customAmount?: number) {
+  async grantXp(userId: string, reason: XpReason, customAmount?: number, contextId?: string) {
     const amount = customAmount ?? XP_AWARDS[reason];
     if (!amount || amount <= 0) return;
+
+    const canGrant = await this.xpValidator.canGrantXp(userId, reason, amount, contextId);
+    if (!canGrant) {
+      this.logger.debug(`XP grant blocked for user ${userId} (Reason: ${reason}) - AntiSpam limit hit.`);
+      return null;
+    }
 
     // Run within a transaction to ensure data integrity
     return this.prisma.$transaction(async (tx) => {

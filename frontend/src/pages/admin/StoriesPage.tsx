@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api';
-import { CheckCircle2, XCircle, EyeOff } from 'lucide-react';
+import { CheckCircle2, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function StoriesPage() {

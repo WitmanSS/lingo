@@ -24,6 +24,21 @@ export class AdminUsersService {
     return { data: users, total };
   }
 
+  async getUserDetails(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        xpLogs: { orderBy: { createdAt: 'desc' }, take: 20 },
+        warnings: { orderBy: { createdAt: 'desc' } },
+        blocks: { orderBy: { createdAt: 'desc' } },
+        stories: { orderBy: { createdAt: 'desc' }, take: 10, select: { id: true, title: true, published: true, createdAt: true } },
+      }
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
+
   async blockUser(adminId: string, userId: string, reason: string) {
     return this.prisma.$transaction(async (tx) => {
       await tx.userBlock.create({

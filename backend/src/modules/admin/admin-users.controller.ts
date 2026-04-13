@@ -13,6 +13,11 @@ export class AdminUsersController {
     return this.usersService.searchUsers(q, parseInt(skip || '0', 10), Math.min(100, parseInt(take || '50', 10)));
   }
 
+  @Get(':id/details')
+  async getUserDetails(@Param('id') id: string) {
+    return this.usersService.getUserDetails(id);
+  }
+
   @Put(':id/block')
   blockUser(@Param('id') userId: string, @Body('reason') reason: string, @CurrentUser() admin: any) {
     return this.usersService.blockUser(admin.id, userId, reason || 'No reason provided');

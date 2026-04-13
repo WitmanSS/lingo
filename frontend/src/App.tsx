@@ -13,6 +13,7 @@ const HomePage = lazy(() => import('@/pages/HomePage'));
 const StoriesPage = lazy(() => import('@/pages/StoriesPage'));
 const StoryReaderPage = lazy(() => import('@/pages/StoryReaderPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+const LeaderboardPage = lazy(() => import('@/pages/LeaderboardPage'));
 
 // Admin Pages
 const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'));
@@ -113,6 +114,7 @@ function App() {
                <Route index element={<HomePage />} />
                <Route path="stories" element={<StoriesPage />} />
                <Route path="stories/:slug" element={<StoryReaderPage />} />
+               <Route path="leaderboards" element={<LeaderboardPage />} />
                <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             </Route>
 

@@ -59,7 +59,7 @@ export class ProgressService {
 
     // Award XP for completion
     if (completed) {
-      await this.xpService.grantXp(userId, XpReason.READ_STORY);
+      await this.xpService.grantXp(userId, XpReason.READ_STORY, undefined, data.storyId);
     }
 
     return progress;

@@ -13,6 +13,9 @@ exports.AdminAnalyticsController = void 0;
 const common_1 = require("@nestjs/common");
 const admin_analytics_service_1 = require("./admin-analytics.service");
 const admin_guard_1 = require("../../common/guards/admin.guard");
+const roles_guard_1 = require("../../common/guards/roles.guard");
+const roles_decorator_1 = require("../../common/decorators/roles.decorator");
+const client_1 = require("@prisma/client");
 let AdminAnalyticsController = class AdminAnalyticsController {
     analyticsService;
     constructor(analyticsService) {
@@ -40,7 +43,8 @@ __decorate([
 ], AdminAnalyticsController.prototype, "getGrowthChart", null);
 exports.AdminAnalyticsController = AdminAnalyticsController = __decorate([
     (0, common_1.Controller)('admin'),
-    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.MODERATOR),
     __metadata("design:paramtypes", [admin_analytics_service_1.AdminAnalyticsService])
 ], AdminAnalyticsController);
 //# sourceMappingURL=admin-analytics.controller.js.map

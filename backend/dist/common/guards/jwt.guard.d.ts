@@ -5,6 +5,6 @@ export declare class JwtGuard extends JwtGuard_base {
     private reflector;
     constructor(reflector: Reflector);
     canActivate(context: ExecutionContext): boolean | Promise<boolean> | import("rxjs").Observable<boolean>;
-    handleRequest<TUser = any>(err: any, user: TUser, info: any): TUser;
+    handleRequest(err: any, user: any, info: any): any;
 }
 export {};

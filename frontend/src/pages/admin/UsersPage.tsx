@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import api from '@/lib/api';
-import { ShieldBan, AlertTriangle, UserSearch, History, FileText } from 'lucide-react';
+import { ShieldBan, ShieldAlert, AlertTriangle, UserSearch, History, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useReactTable,
@@ -28,7 +28,7 @@ export default function UsersPage() {
     setLoading(true);
     try {
       const res = await api.get(`/admin/users?q=${search}`);
-      setUsers(res.data.data);
+      setUsers(res.data || []);
     } catch (err) {
       toast.error('Failed to fetch users');
     } finally {
@@ -246,6 +246,48 @@ export default function UsersPage() {
                    </div>
                  </div>
                )}
+
+               {/* Admin Actions */}
+               <div className="pt-6 border-t mt-8 flex flex-col gap-3">
+                  <h4 className="font-bold flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-red-600" /> Administrative Actions</h4>
+                  <p className="text-sm text-muted-foreground mb-2">Actions taken here will be permanently logged.</p>
+                  <div className="flex gap-4">
+                     <Button 
+                       variant="outline" 
+                       className="w-full text-yellow-600 border-yellow-200 hover:bg-yellow-50"
+                       onClick={async () => {
+                         const reason = prompt('Enter completely descriptive warning reason:');
+                         if (reason) {
+                            try {
+                               await api.put(`/admin/users/${selectedUserId}/warn`, { reason });
+                               toast.success('Warning issued successfully.');
+                               loadUserDetails(selectedUserId!);
+                            } catch(e) { toast.error('Failed to issue warning'); }
+                         }
+                       }}
+                     >
+                        Issue Warning
+                     </Button>
+                     <Button 
+                       variant="destructive" 
+                       className="w-full"
+                       onClick={async () => {
+                         const reason = prompt('CONFIRM BLOCK: Enter ban reason:');
+                         if (reason) {
+                            try {
+                               await api.put(`/admin/users/${selectedUserId}/block`, { reason });
+                               toast.success('User has been blocked from the platform.');
+                               setSelectedUserId(null);
+                               fetchUsers();
+                            } catch(e) { toast.error('Failed to block user'); }
+                         }
+                       }}
+                     >
+                        Block Account
+                     </Button>
+                  </div>
+               </div>
+
              </div>
           )}
         </SheetContent>

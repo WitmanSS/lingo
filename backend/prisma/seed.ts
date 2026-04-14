@@ -31,29 +31,6 @@ async function main() {
   ]);
   console.log(`  ✅ ${languages.length} languages created`);
 
-  // Create gamification levels
-  const gamificationLevels = [
-    { level: 1, name: 'Beginner Reader', xpRequired: 500, description: 'Starting the linguistic journey', iconUrl: '🛡️' },
-    { level: 2, name: 'Story Explorer', xpRequired: 1000, description: 'Exploring new worlds through stories', iconUrl: '🗺️' },
-    { level: 3, name: 'Knowledge Hunter', xpRequired: 1500, description: 'Hunting for new vocabulary', iconUrl: '🏹' },
-    { level: 4, name: 'Language Warrior', xpRequired: 2200, description: 'Fighting through complex grammar', iconUrl: '⚔️' },
-    { level: 5, name: 'Story Master', xpRequired: 3000, description: 'Mastering the art of context', iconUrl: '👑' },
-    { level: 6, name: 'Vocabulary Knight', xpRequired: 4200, description: 'A knight of thousands words', iconUrl: '♘' },
-    { level: 7, name: 'Reading Champion', xpRequired: 5800, description: 'Champion of comprehensive reading', iconUrl: '🏆' },
-    { level: 8, name: 'Linguistic Expert', xpRequired: 7800, description: 'Expert in multilingual structures', iconUrl: '🎓' },
-    { level: 9, name: 'Story Legend', xpRequired: 10200, description: 'A legendary reader', iconUrl: '🌟' },
-    { level: 10, name: 'Lingua Grandmaster', xpRequired: 13500, description: 'The absolute grandmaster of languages', iconUrl: '💠' },
-  ];
-
-  for (const tier of gamificationLevels) {
-    await prisma.levelTable.upsert({
-      where: { level: tier.level },
-      update: tier,
-      create: tier,
-    });
-  }
-  console.log(`  ✅ ${gamificationLevels.length} gamification levels created`);
-
   // Create admin user
   const adminPassword = await bcrypt.hash('admin123', 10);
   const admin = await prisma.user.upsert({

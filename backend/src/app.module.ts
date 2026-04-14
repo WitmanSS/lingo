@@ -22,19 +22,25 @@ import { RolesGuard } from './common/guards/roles.guard';
 // Health
 import { HealthController } from './core/health/health.controller';
 
-// Modules
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { StoriesModule } from './modules/stories/stories.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { NotificationsModule } from './modules/notifications/notifications.module';
-import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
-import { GamificationModule } from './modules/gamification/gamification.module';
-import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
-import { FavoritesModule } from './modules/favorites/favorites.module';
-import { ProgressModule } from './modules/progress/progress.module';
-import { QuizzesModule } from './modules/quizzes/quizzes.module';
+// Clean Architecture Modules
+import { DomainModule } from './domain/domain.module';
+import { ApplicationModule } from './application/application.module';
+import { InfrastructureModule } from './infrastructure/infrastructure.module';
+import { PresentationModule } from './presentation/presentation.module';
+
+// Legacy Modules (gradual migration to Clean Architecture)
+// import { AuthModule } from './modules/auth/auth.module';
+// import { UsersModule } from './modules/users/users.module';
+// import { StoriesModule } from './modules/stories/stories.module';
+// import { AdminModule } from './modules/admin/admin.module';
+// import { NotificationsModule } from './modules/notifications/notifications.module';
+// import { VocabularyModule } from './modules/vocabulary/vocabulary.module';
+// import { GamificationModule } from './modules/gamification/gamification.module';
+// import { AnalyticsModule } from './modules/analytics/analytics.module';
+// import { BookmarksModule } from './modules/bookmarks/bookmarks.module';
+// import { FavoritesModule } from './modules/favorites/favorites.module';
+// import { ProgressModule } from './modules/progress/progress.module';
+// import { QuizzesModule } from './modules/quizzes/quizzes.module';
 
 @Module({
   imports: [
@@ -58,19 +64,25 @@ import { QuizzesModule } from './modules/quizzes/quizzes.module';
     PaymentModule,
     SearchModule,
 
-    // Feature modules
-    AuthModule,
-    UsersModule,
-    StoriesModule,
-    AdminModule,
-    NotificationsModule,
-    VocabularyModule,
-    GamificationModule,
-    AnalyticsModule,
-    BookmarksModule,
-    FavoritesModule,
-    ProgressModule,
-    QuizzesModule,
+    // Clean Architecture
+    DomainModule,
+    ApplicationModule,
+    InfrastructureModule,
+    PresentationModule,
+
+    // Feature modules (gradually migrating to Clean Architecture)
+    // AuthModule,
+    // UsersModule,
+    // StoriesModule,
+    // AdminModule,
+    // NotificationsModule,
+    // VocabularyModule,
+    // GamificationModule,
+    // AnalyticsModule,
+    // BookmarksModule,
+    // FavoritesModule,
+    // ProgressModule,
+    // QuizzesModule,
   ],
   controllers: [HealthController],
   providers: [

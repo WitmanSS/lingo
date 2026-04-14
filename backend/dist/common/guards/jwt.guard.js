@@ -13,7 +13,6 @@ exports.JwtGuard = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const core_1 = require("@nestjs/core");
-const public_decorator_1 = require("../decorators/public.decorator");
 let JwtGuard = class JwtGuard extends (0, passport_1.AuthGuard)('jwt') {
     reflector;
     constructor(reflector) {
@@ -21,7 +20,7 @@ let JwtGuard = class JwtGuard extends (0, passport_1.AuthGuard)('jwt') {
         this.reflector = reflector;
     }
     canActivate(context) {
-        const isPublic = this.reflector.getAllAndOverride(public_decorator_1.IS_PUBLIC_KEY, [
+        const isPublic = this.reflector.getAllAndOverride('isPublic', [
             context.getHandler(),
             context.getClass(),
         ]);
@@ -32,7 +31,7 @@ let JwtGuard = class JwtGuard extends (0, passport_1.AuthGuard)('jwt') {
     }
     handleRequest(err, user, info) {
         if (err || !user) {
-            throw err || new common_1.UnauthorizedException('Authentication required');
+            throw err || new Error('Unauthorized');
         }
         return user;
     }

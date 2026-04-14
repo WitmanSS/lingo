@@ -30,6 +30,7 @@ export declare class XpService {
     grantXp(userId: string, reason: XpReason, customAmount?: number, contextId?: string): Promise<{
         id: string;
         createdAt: Date;
+        updatedAt: Date;
         level: number;
         deletedAt: Date | null;
         username: string;
@@ -44,5 +45,6 @@ export declare class XpService {
         lastLoginAt: Date | null;
         emailVerified: boolean;
         twoFactorEnabled: boolean;
+        twoFactorSecret: string | null;
     } | null | undefined>;
 }

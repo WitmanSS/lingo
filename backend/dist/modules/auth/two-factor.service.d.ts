@@ -1,8 +1,8 @@
 export declare class TwoFactorService {
-    generateSecret(): {
+    generateSecret(userId: string): Promise<{
         secret: string;
         qrCode: string;
-    };
+    }>;
     verifyToken(secret: string, token: string): boolean;
-    resendBackupCodes(): string[];
+    generateBackupCodes(): string[];
 }

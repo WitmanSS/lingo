@@ -16,8 +16,8 @@ exports.AnalyticsController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_guard_1 = require("../../common/guards/jwt.guard");
 const roles_guard_1 = require("../../common/guards/roles.guard");
-const roles_decorator_1 = require("../../common/decorators/roles.decorator");
-const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
+const roles_decorator_1 = require("../../auth/decorators/roles.decorator");
+const current_user_decorator_1 = require("../../auth/decorators/current-user.decorator");
 const analytics_service_1 = require("./analytics.service");
 let AnalyticsController = class AnalyticsController {
     analyticsService;

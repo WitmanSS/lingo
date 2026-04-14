@@ -7,9 +7,9 @@ export declare class ProgressController {
         userId: string;
         updatedAt: Date;
         storyId: string;
+        completed: boolean;
         progressPercentage: number;
         lastPosition: number;
-        completed: boolean;
         readingTimeSeconds: number;
         startedAt: Date;
         completedAt: Date | null;
@@ -24,9 +24,9 @@ export declare class ProgressController {
         userId: string;
         updatedAt: Date;
         storyId: string;
+        completed: boolean;
         progressPercentage: number;
         lastPosition: number;
-        completed: boolean;
         readingTimeSeconds: number;
         startedAt: Date;
         completedAt: Date | null;

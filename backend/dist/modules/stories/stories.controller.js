@@ -16,27 +16,30 @@ exports.StoriesController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_guard_1 = require("../../common/guards/jwt.guard");
 const roles_guard_1 = require("../../common/guards/roles.guard");
-const roles_decorator_1 = require("../../common/decorators/roles.decorator");
-const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
-const public_decorator_1 = require("../../common/decorators/public.decorator");
+const roles_decorator_1 = require("../../auth/decorators/roles.decorator");
+const current_user_decorator_1 = require("../../auth/decorators/current-user.decorator");
+const public_decorator_1 = require("../../auth/decorators/public.decorator");
 const stories_service_1 = require("./stories.service");
-const dto_1 = require("./dto");
+const client_1 = require("@prisma/client");
 let StoriesController = class StoriesController {
     storiesService;
     constructor(storiesService) {
         this.storiesService = storiesService;
     }
-    findAll(query) {
-        return this.storiesService.findAll(query);
+    findAll(page, limit, level, tag, search, sort) {
+        return this.storiesService.findAll({ page, limit, level, tag, search, sort });
     }
     findBySlug(slug) {
         return this.storiesService.findBySlug(slug);
     }
-    create(userId, dto) {
-        return this.storiesService.create(userId, dto);
+    createPublic(data) {
+        return this.storiesService.createByUsername(data);
     }
-    update(id, dto) {
-        return this.storiesService.update(id, dto);
+    create(user, data) {
+        return this.storiesService.create(user.id, data);
+    }
+    update(id, data) {
+        return this.storiesService.update(id, data);
     }
     delete(id) {
         return this.storiesService.delete(id);
@@ -44,15 +47,20 @@ let StoriesController = class StoriesController {
 };
 exports.StoriesController = StoriesController;
 __decorate([
-    (0, common_1.Get)(),
+    (0, common_1.Get)('stories'),
     (0, public_decorator_1.Public)(),
-    __param(0, (0, common_1.Query)()),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('level')),
+    __param(3, (0, common_1.Query)('tag')),
+    __param(4, (0, common_1.Query)('search')),
+    __param(5, (0, common_1.Query)('sort')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [dto_1.QueryStoriesDto]),
+    __metadata("design:paramtypes", [Number, Number, String, String, String, String]),
     __metadata("design:returntype", void 0)
 ], StoriesController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':slug'),
+    (0, common_1.Get)('stories/:slug'),
     (0, public_decorator_1.Public)(),
     __param(0, (0, common_1.Param)('slug')),
     __metadata("design:type", Function),
@@ -60,27 +68,34 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], StoriesController.prototype, "findBySlug", null);
 __decorate([
-    (0, common_1.Post)(),
+    (0, common_1.Post)('stories'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], StoriesController.prototype, "createPublic", null);
+__decorate([
+    (0, common_1.Post)('admin/stories'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('ADMIN', 'MODERATOR'),
-    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    (0, roles_decorator_1.Roles)('ADMIN'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, dto_1.CreateStoryDto]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], StoriesController.prototype, "create", null);
 __decorate([
-    (0, common_1.Put)(':id'),
+    (0, common_1.Put)('admin/stories/:id'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('ADMIN', 'MODERATOR'),
+    (0, roles_decorator_1.Roles)('ADMIN'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, dto_1.UpdateStoryDto]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], StoriesController.prototype, "update", null);
 __decorate([
-    (0, common_1.Delete)(':id'),
+    (0, common_1.Delete)('admin/stories/:id'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('ADMIN'),
     __param(0, (0, common_1.Param)('id')),
@@ -89,7 +104,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], StoriesController.prototype, "delete", null);
 exports.StoriesController = StoriesController = __decorate([
-    (0, common_1.Controller)('stories'),
+    (0, common_1.Controller)(),
     __metadata("design:paramtypes", [stories_service_1.StoriesService])
 ], StoriesController);
 //# sourceMappingURL=stories.controller.js.map

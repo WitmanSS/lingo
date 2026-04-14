@@ -44,7 +44,7 @@ let SessionService = class SessionService {
         });
     }
     generateToken() {
-        return Math.random().toString(36).substr(2) + Date.now().toString(36);
+        return require('crypto').randomBytes(32).toString('hex');
     }
 };
 exports.SessionService = SessionService;

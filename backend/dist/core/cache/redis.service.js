@@ -23,6 +23,21 @@ let RedisService = class RedisService {
         this.configService = configService;
         this.redis = new ioredis_1.default(this.configService.getRedisUrl());
     }
+    getClient() {
+        return this.redis;
+    }
+    async zrevrange(key, start, stop, withScores) {
+        if (withScores) {
+            return this.redis.zrevrange(key, start, stop, 'WITHSCORES');
+        }
+        return this.redis.zrevrange(key, start, stop);
+    }
+    async incrby(key, amount) {
+        return this.redis.incrby(key, amount);
+    }
+    pipeline() {
+        return this.redis.pipeline();
+    }
     async onModuleDestroy() {
         await this.redis.quit();
     }
@@ -58,24 +73,6 @@ let RedisService = class RedisService {
     }
     async hdel(key, field) {
         await this.redis.hdel(key, field);
-    }
-    async zadd(key, score, member) {
-        await this.redis.zadd(key, score, member);
-    }
-    async zrevrange(key, start, stop, withScores = false) {
-        if (withScores) {
-            return this.redis.zrevrange(key, start, stop, 'WITHSCORES');
-        }
-        return this.redis.zrevrange(key, start, stop);
-    }
-    async zrevrank(key, member) {
-        return this.redis.zrevrank(key, member);
-    }
-    async zscore(key, member) {
-        return this.redis.zscore(key, member);
-    }
-    getClient() {
-        return this.redis;
     }
 };
 exports.RedisService = RedisService;

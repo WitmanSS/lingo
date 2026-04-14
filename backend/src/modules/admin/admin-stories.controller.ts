@@ -1,9 +1,13 @@
 import { Controller, Get, Put, Body, Param, Query, UseGuards, Delete } from '@nestjs/common';
 import { AdminStoriesService } from './admin-stories.service';
 import { AdminGuard } from '../../common/guards/admin.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('admin/stories')
-@UseGuards(AdminGuard)
+@UseGuards(AdminGuard, RolesGuard)
+@Roles(Role.ADMIN, Role.MODERATOR)
 export class AdminStoriesController {
   constructor(private readonly storiesService: AdminStoriesService) {}
 

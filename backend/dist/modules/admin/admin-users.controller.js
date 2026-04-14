@@ -16,6 +16,9 @@ exports.AdminUsersController = void 0;
 const common_1 = require("@nestjs/common");
 const admin_users_service_1 = require("./admin-users.service");
 const admin_guard_1 = require("../../common/guards/admin.guard");
+const roles_guard_1 = require("../../common/guards/roles.guard");
+const roles_decorator_1 = require("../../common/decorators/roles.decorator");
+const client_1 = require("@prisma/client");
 const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
 let AdminUsersController = class AdminUsersController {
     usersService;
@@ -72,7 +75,8 @@ __decorate([
 ], AdminUsersController.prototype, "warnUser", null);
 exports.AdminUsersController = AdminUsersController = __decorate([
     (0, common_1.Controller)('admin/users'),
-    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.MODERATOR),
     __metadata("design:paramtypes", [admin_users_service_1.AdminUsersService])
 ], AdminUsersController);
 //# sourceMappingURL=admin-users.controller.js.map

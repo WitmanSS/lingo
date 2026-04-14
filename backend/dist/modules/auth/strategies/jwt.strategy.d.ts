@@ -11,10 +11,12 @@ export declare class JwtStrategy extends JwtStrategy_base {
     }): Promise<{
         id: string;
         createdAt: Date;
+        updatedAt: Date;
         level: number;
         deletedAt: Date | null;
         username: string;
         email: string;
+        passwordHash: string;
         role: import(".prisma/client").$Enums.Role;
         avatarUrl: string | null;
         bio: string | null;
@@ -24,6 +26,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         lastLoginAt: Date | null;
         emailVerified: boolean;
         twoFactorEnabled: boolean;
+        twoFactorSecret: string | null;
     }>;
 }
 export {};

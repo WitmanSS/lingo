@@ -1,27 +1,24 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
 import { Level, Prisma } from '@prisma/client';
-import { CreateStoryDto, UpdateStoryDto, QueryStoriesDto } from './dto';
-import { XpService, XpReason } from '../gamification/xp.service';
-import { ModerationPriorityService } from '../admin/moderation-priority.service';
 
 @Injectable()
 export class StoriesService {
-  private readonly logger = new Logger(StoriesService.name);
+  constructor(private prisma: PrismaService) {}
 
-  constructor(
-    private prisma: PrismaService,
-    private xpService: XpService,
-    private moderationPriorityService: ModerationPriorityService,
-  ) {}
-
-  async findAll(params: QueryStoriesDto) {
+  async findAll(params: {
+    page?: number;
+    limit?: number;
+    level?: Level;
+    tag?: string;
+    search?: string;
+    sort?: string;
+  }) {
     const { page = 1, limit = 12, level, tag, search, sort = 'newest' } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.StoryWhereInput = {
       published: true,
-      deletedAt: null, // Soft delete filter
       ...(level && { level }),
       ...(tag && { tags: { some: { tag: { name: tag } } } }),
       ...(search && {
@@ -46,11 +43,9 @@ export class StoriesService {
         select: {
           id: true, title: true, slug: true, level: true,
           readingTimeMinutes: true, wordCount: true, coverImage: true,
-          difficultyScore: true, isAIGenerated: true,
-          createdAt: true, updatedAt: true,
-          author: { select: { id: true, username: true, avatarUrl: true } },
+          createdAt: true,
+          author: { select: { username: true } },
           tags: { include: { tag: true } },
-          _count: { select: { favorites: true, comments: true, ratings: true } },
         },
       }),
       this.prisma.story.count({ where }),
@@ -61,36 +56,23 @@ export class StoriesService {
         ...s,
         tags: s.tags.map((st) => st.tag),
       })),
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPrevPage: page > 1,
-      },
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   async findBySlug(slug: string) {
     const story = await this.prisma.story.findUnique({
-      where: { slug, deletedAt: null },
+      where: { slug },
       include: {
         author: { select: { id: true, username: true, avatarUrl: true } },
-        content: true,
-        chapters: { orderBy: { order: 'asc' } },
         tags: { include: { tag: true } },
         vocabulary: { include: { vocabulary: true } },
-        audio: true,
-        translations: true,
-        _count: { select: { favorites: true, comments: true, ratings: true } },
       },
     });
-
-    if (!story) {
-      throw new NotFoundException('Story not found');
-    }
-
+    if (!story) throw new NotFoundException('Story not found');
     return {
       ...story,
       tags: story.tags.map((st) => st.tag),
@@ -98,153 +80,139 @@ export class StoriesService {
     };
   }
 
-  async create(authorId: string, dto: CreateStoryDto) {
-    const slug = this.generateSlug(dto.title);
-    const wordCount = dto.content.split(/\s+/).filter(Boolean).length;
-    const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
+  async createByUsername(data: {
+    username: string;
+    title: string;
+    content: string;
+    level: Level;
+    coverImage?: string;
+    tagIds?: string[];
+  }) {
+    if (!data.username?.trim()) {
+      throw new BadRequestException('Username is required');
+    }
 
-    // Basic creation with initially published = false if moderation triggers later
-    let story = await this.prisma.story.create({
+    const normalizedUsername = data.username.trim();
+    let user = await this.prisma.user.findUnique({ where: { username: normalizedUsername } });
+
+    if (!user) {
+      const normalizedEmail = `${normalizedUsername.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z0-9.]/g, '') || 'guest'}@guest.linguaread.local`;
+      user = await this.prisma.user.create({
+        data: {
+          username: normalizedUsername,
+          email: normalizedEmail,
+          passwordHash: 'guest-placeholder',
+        },
+      });
+    }
+
+    return this.create(user.id, data);
+  }
+
+  async create(authorId: string, data: {
+    title: string; content: string; level: Level;
+    coverImage?: string; tagIds?: string[];
+  }) {
+    const slug = this.generateSlug(data.title);
+    const wordCount = data.content.split(/\s+/).length;
+    const readingTimeMinutes = Math.ceil(wordCount / 200);
+
+    return this.prisma.story.create({
       data: {
-        title: dto.title,
+        title: data.title,
         slug,
         content: {
-          create: { content: dto.content },
+          create: {
+            content: data.content,
+          },
         },
-        level: dto.level,
+        level: data.level,
         wordCount,
         readingTimeMinutes,
-        coverImage: dto.coverImage,
+        coverImage: data.coverImage,
         authorId,
-        published: true, // Optimistically publish
-        tags: dto.tagIds ? {
-          create: dto.tagIds.map((tagId) => ({ tagId })),
+        published: true,
+        tags: data.tagIds ? {
+          create: data.tagIds.map((tagId) => ({ tagId })),
         } : undefined,
       },
       include: {
-        author: { select: { id: true, username: true } },
+        author: { select: { username: true } },
         tags: { include: { tag: true } },
       },
     });
-
-    // Run Moderation Priority Scan
-    const scanResult = await this.moderationPriorityService.scanStoryContent(story.id, dto.content);
-    
-    if (scanResult.flag) {
-      this.logger.warn(`Story ${story.id} auto-flagged [${scanResult.priority}]`);
-      
-      story = await this.prisma.story.update({
-         where: { id: story.id },
-         data: { published: false }, // Unpublish high-risk stories automatically
-         include: {
-            author: { select: { id: true, username: true } },
-            tags: { include: { tag: true } },
-         }
-      });
-
-      // Systemic Report insertion
-      await this.prisma.storyReport.create({
-         data: {
-            storyId: story.id,
-            reporterId: authorId, // Mark author as reporter for systemic triggers
-            reason: `[SYSTEM AUTO-FLAG] Priority: ${scanResult.priority} | Reason: ${scanResult.reason}`,
-         }
-      });
-    }
-
-    // Grant XP to author (Only if not flagged or maybe we give it anyway and retract later?? Let's say we only give XP if published)
-    if (!scanResult.flag) {
-       await this.xpService.grantXp(authorId, XpReason.WRITE_STORY);
-    }
-
-    this.logger.log(`Story created: ${story.title} (${story.id})`);
-    return {
-      ...story,
-      tags: story.tags.map((st) => st.tag),
-    };
   }
 
-  async update(id: string, dto: UpdateStoryDto) {
-    // Verify story exists and is not soft-deleted
-    const existing = await this.prisma.story.findFirst({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) {
-      throw new NotFoundException('Story not found');
+  async update(id: string, data: Partial<{
+    title: string; content: string; level: Level;
+    coverImage: string; published: boolean; tagIds: string[];
+  }>) {
+    const updateData: any = { ...data };
+    delete updateData.tagIds;
+
+    if (data.title) {
+      updateData.slug = this.generateSlug(data.title);
+    }
+    if (data.content) {
+      updateData.wordCount = data.content.split(/\s+/).length;
+      updateData.readingTimeMinutes = Math.ceil(updateData.wordCount / 200);
     }
 
-    const updateData: Prisma.StoryUpdateInput = {};
-
-    if (dto.title) {
-      updateData.title = dto.title;
-      updateData.slug = this.generateSlug(dto.title);
-    }
-    if (dto.content) {
-      const wordCount = dto.content.split(/\s+/).filter(Boolean).length;
-      updateData.wordCount = wordCount;
-      updateData.readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
-      updateData.content = {
-        update: { content: dto.content },
-      };
-    }
-    if (dto.level) {
-      updateData.level = dto.level;
-    }
-    if (dto.coverImage !== undefined) {
-      updateData.coverImage = dto.coverImage;
-    }
-    if (dto.published !== undefined) {
-      updateData.published = dto.published;
-    }
-
-    // Handle tags separately
-    if (dto.tagIds) {
+    if (data.tagIds) {
       await this.prisma.storyTag.deleteMany({ where: { storyId: id } });
-      updateData.tags = { create: dto.tagIds.map((tagId) => ({ tagId })) };
+      updateData.tags = { create: data.tagIds.map((tagId) => ({ tagId })) };
     }
 
-    const updated = await this.prisma.story.update({
+    return this.prisma.story.update({
       where: { id },
       data: updateData,
-      include: {
-        author: { select: { id: true, username: true } },
-        tags: { include: { tag: true } },
-      },
     });
-
-    this.logger.log(`Story updated: ${updated.title} (${id})`);
-    return {
-      ...updated,
-      tags: updated.tags.map((st) => st.tag),
-    };
   }
 
   async delete(id: string) {
-    // Soft delete instead of hard delete
-    const existing = await this.prisma.story.findFirst({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) {
-      throw new NotFoundException('Story not found');
-    }
-
-    await this.prisma.story.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
-
-    this.logger.log(`Story soft-deleted: ${id}`);
-    return { message: 'Story deleted successfully' };
+    await this.prisma.story.delete({ where: { id } });
+    return { message: 'Story deleted' };
   }
 
   private generateSlug(title: string): string {
-    return (
-      title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '') +
-      '-' +
-      Date.now().toString(36)
-    );
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      + '-' + Date.now().toString(36);
+  }
+
+  async searchStories(query: string, options: { limit?: number; offset?: number } = {}) {
+    const { limit = 20, offset = 0 } = options;
+    const searchQuery = query.trim();
+
+    if (!searchQuery) {
+      return this.findAll({ page: 1, limit });
+    }
+
+    // Use PostgreSQL full-text search with ILIKE for better performance
+    const stories = await this.prisma.$queryRaw`
+      SELECT
+        s.id, s.title, s.slug, s.level, s."readingTimeMinutes", s."wordCount",
+        s."coverImage", s."createdAt",
+        json_build_object('username', u.username) as author,
+        COALESCE(json_agg(json_build_object('name', t.name)) FILTER (WHERE t.id IS NOT NULL), '[]') as tags
+      FROM stories s
+      JOIN users u ON s."authorId" = u.id
+      LEFT JOIN "_StoryTags" st ON s.id = st."A"
+      LEFT JOIN tags t ON st."B" = t.id
+      LEFT JOIN story_contents sc ON s.id = sc."storyId"
+      WHERE s.published = true
+        AND (
+          s.title ILIKE ${`%${searchQuery}%`}
+          OR sc.content ILIKE ${`%${searchQuery}%`}
+        )
+      GROUP BY s.id, s.title, s.slug, s.level, s."readingTimeMinutes",
+               s."wordCount", s."coverImage", s."createdAt", u.username
+      ORDER BY s."createdAt" DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    return stories;
   }
 }

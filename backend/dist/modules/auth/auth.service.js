@@ -41,57 +41,43 @@ var __importStar = (this && this.__importStar) || (function () {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var AuthService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const auth_repository_1 = require("./auth.repository");
+const two_factor_service_1 = require("./two-factor.service");
 const prisma_service_1 = require("../../core/database/prisma.service");
 const config_service_1 = require("../../core/config/config.service");
 const bcrypt = __importStar(require("bcrypt"));
-const uuid_1 = require("uuid");
-let AuthService = AuthService_1 = class AuthService {
+let AuthService = class AuthService {
     authRepository;
     jwtService;
+    twoFactorService;
     prisma;
     configService;
-    logger = new common_1.Logger(AuthService_1.name);
-    constructor(authRepository, jwtService, prisma, configService) {
+    constructor(authRepository, jwtService, twoFactorService, prisma, configService) {
         this.authRepository = authRepository;
         this.jwtService = jwtService;
+        this.twoFactorService = twoFactorService;
         this.prisma = prisma;
         this.configService = configService;
     }
-    async register(dto) {
-        const existingEmail = await this.authRepository.findByEmail(dto.email);
-        if (existingEmail) {
+    async register(email, username, password) {
+        const existingUser = await this.authRepository.findByEmail(email);
+        if (existingUser) {
             throw new common_1.BadRequestException('Email already registered');
         }
-        const existingUsername = await this.prisma.user.findUnique({
-            where: { username: dto.username },
-        });
-        if (existingUsername) {
-            throw new common_1.BadRequestException('Username already taken');
-        }
-        const passwordHash = await bcrypt.hash(dto.password, this.configService.bcryptRounds);
+        const passwordHash = await bcrypt.hash(password, 10);
         const user = await this.authRepository.create({
-            email: dto.email,
-            username: dto.username,
+            email,
+            username,
             passwordHash,
         });
-        const tokens = await this.generateTokens(user.id, user.role);
-        await this.storeRefreshToken(user.id, tokens.refreshToken);
-        this.logger.log(`User registered: ${user.email}`);
         return {
-            accessToken: tokens.accessToken,
-            refreshToken: tokens.refreshToken,
-            user: {
-                id: user.id,
-                email: user.email,
-                username: user.username,
-                role: user.role,
-            },
+            id: user.id,
+            email: user.email,
+            username: user.username,
         };
     }
     async login(email, password) {
@@ -99,20 +85,27 @@ let AuthService = AuthService_1 = class AuthService {
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
-        if (user.deletedAt) {
-            throw new common_1.UnauthorizedException('Account has been deactivated');
-        }
         const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
-        const tokens = await this.generateTokens(user.id, user.role);
-        await this.storeRefreshToken(user.id, tokens.refreshToken);
+        if (user.twoFactorEnabled) {
+            const tempToken = this.jwtService.sign({ sub: user.id, type: '2fa_temp' }, { expiresIn: '5m' });
+            return {
+                requires2FA: true,
+                tempToken,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    username: user.username,
+                },
+            };
+        }
+        const tokens = await this.generateTokens(user.id);
         await this.prisma.user.update({
             where: { id: user.id },
             data: { lastLoginAt: new Date() },
         });
-        this.logger.log(`User logged in: ${user.email}`);
         return {
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
@@ -120,82 +113,96 @@ let AuthService = AuthService_1 = class AuthService {
                 id: user.id,
                 email: user.email,
                 username: user.username,
-                role: user.role,
-                avatarUrl: user.avatarUrl,
-                xp: user.xp,
-                level: user.level,
             },
         };
     }
-    async refreshToken(token) {
+    async refreshToken(refreshToken) {
         try {
-            const decoded = this.jwtService.verify(token, {
+            const decoded = this.jwtService.verify(refreshToken, {
                 secret: this.configService.getJwtRefreshSecret(),
             });
-            const storedToken = await this.prisma.refreshToken.findUnique({
-                where: { token },
-            });
-            if (!storedToken || storedToken.expiresAt < new Date()) {
-                throw new common_1.UnauthorizedException('Refresh token expired or revoked');
-            }
-            await this.prisma.refreshToken.delete({ where: { id: storedToken.id } });
-            const user = await this.authRepository.findById(decoded.sub);
-            if (!user || user.deletedAt) {
-                throw new common_1.UnauthorizedException('User not found or deactivated');
-            }
-            const tokens = await this.generateTokens(decoded.sub, user.role);
-            await this.storeRefreshToken(decoded.sub, tokens.refreshToken);
+            const tokens = await this.generateTokens(decoded.sub);
             return {
                 accessToken: tokens.accessToken,
                 refreshToken: tokens.refreshToken,
             };
         }
         catch (error) {
-            if (error instanceof common_1.UnauthorizedException)
-                throw error;
             throw new common_1.UnauthorizedException('Invalid refresh token');
         }
     }
     async validateUser(userId) {
         const user = await this.authRepository.findById(userId);
-        if (!user || user.deletedAt) {
+        if (!user) {
             throw new common_1.UnauthorizedException('User not found');
         }
-        const { passwordHash, ...safeUser } = user;
-        return safeUser;
+        return user;
     }
-    async logout(userId) {
-        await this.prisma.refreshToken.deleteMany({ where: { userId } });
-        await this.authRepository.deleteSessions(userId);
-        this.logger.log(`User logged out: ${userId}`);
-        return { success: true };
-    }
-    async generateTokens(userId, role) {
-        const accessToken = this.jwtService.sign({ sub: userId, role }, { expiresIn: '15m' });
+    async generateTokens(userId) {
+        const accessToken = this.jwtService.sign({ sub: userId }, { expiresIn: '15m' });
         const refreshToken = this.jwtService.sign({ sub: userId }, {
             secret: this.configService.getJwtRefreshSecret(),
             expiresIn: '7d',
         });
         return { accessToken, refreshToken };
     }
-    async storeRefreshToken(userId, token) {
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
-        await this.prisma.refreshToken.create({
+    async logout(userId) {
+        await this.authRepository.deleteSessions(userId);
+        return { success: true };
+    }
+    async enable2FA(userId, secret) {
+        await this.prisma.user.update({
+            where: { id: userId },
             data: {
-                id: (0, uuid_1.v4)(),
-                token,
-                userId,
-                expiresAt,
+                twoFactorEnabled: true,
+                twoFactorSecret: secret,
             },
         });
     }
+    async disable2FA(userId) {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                twoFactorEnabled: false,
+                twoFactorSecret: null,
+            },
+        });
+    }
+    async verify2FA(tempToken, token) {
+        try {
+            const decoded = this.jwtService.verify(tempToken, {
+                secret: this.configService.getJwtSecret(),
+            });
+            const user = await this.authRepository.findById(decoded.sub);
+            if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+                throw new common_1.UnauthorizedException('2FA not enabled for this user');
+            }
+            const isValid = this.twoFactorService.verifyToken(user.twoFactorSecret, token);
+            if (!isValid) {
+                throw new common_1.UnauthorizedException('Invalid 2FA token');
+            }
+            const tokens = await this.generateTokens(user.id);
+            return {
+                accessToken: tokens.accessToken,
+                refreshToken: tokens.refreshToken,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    username: user.username,
+                },
+            };
+        }
+        catch (error) {
+            throw new common_1.UnauthorizedException('Invalid 2FA verification');
+        }
+    }
 };
 exports.AuthService = AuthService;
-exports.AuthService = AuthService = AuthService_1 = __decorate([
+exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [auth_repository_1.AuthRepository,
         jwt_1.JwtService,
+        two_factor_service_1.TwoFactorService,
         prisma_service_1.PrismaService,
         config_service_1.AppConfigService])
 ], AuthService);

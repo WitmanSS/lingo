@@ -12,29 +12,35 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GamificationService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../core/database/prisma.service");
+const cache_service_1 = require("../../core/cache/cache.service");
 let GamificationService = class GamificationService {
     prisma;
-    constructor(prisma) {
+    cacheService;
+    constructor(prisma, cacheService) {
         this.prisma = prisma;
+        this.cacheService = cacheService;
     }
     async getLeaderboard(page = 1, limit = 20) {
-        const skip = (page - 1) * limit;
-        const [data, total] = await Promise.all([
-            this.prisma.user.findMany({
-                skip,
-                take: limit,
-                orderBy: { xp: 'desc' },
-                select: { id: true, username: true, avatarUrl: true, xp: true, level: true },
-            }),
-            this.prisma.user.count(),
-        ]);
-        return {
-            data: data.map((user, idx) => ({ ...user, rank: skip + idx + 1 })),
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit),
-        };
+        const cacheKey = `leaderboard:page:${page}:limit:${limit}`;
+        return this.cacheService.getOrSet(cacheKey, async () => {
+            const skip = (page - 1) * limit;
+            const [data, total] = await Promise.all([
+                this.prisma.user.findMany({
+                    skip,
+                    take: limit,
+                    orderBy: { xp: 'desc' },
+                    select: { id: true, username: true, avatarUrl: true, xp: true, level: true },
+                }),
+                this.prisma.user.count(),
+            ]);
+            return {
+                data: data.map((user, idx) => ({ ...user, rank: skip + idx + 1 })),
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            };
+        }, 300);
     }
     async getUserAchievements(userId) {
         const all = await this.prisma.achievement.findMany();
@@ -86,6 +92,7 @@ let GamificationService = class GamificationService {
 exports.GamificationService = GamificationService;
 exports.GamificationService = GamificationService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        cache_service_1.CacheService])
 ], GamificationService);
 //# sourceMappingURL=gamification.service.js.map

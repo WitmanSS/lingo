@@ -1,29 +1,41 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
+import { CacheService } from '../../core/cache/cache.service';
 
 @Injectable()
 export class GamificationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cacheService: CacheService,
+  ) {}
 
   async getLeaderboard(page = 1, limit = 20) {
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      this.prisma.user.findMany({
-        skip,
-        take: limit,
-        orderBy: { xp: 'desc' },
-        select: { id: true, username: true, avatarUrl: true, xp: true, level: true },
-      }),
-      this.prisma.user.count(),
-    ]);
+    const cacheKey = `leaderboard:page:${page}:limit:${limit}`;
 
-    return {
-      data: data.map((user, idx) => ({ ...user, rank: skip + idx + 1 })),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return this.cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const skip = (page - 1) * limit;
+        const [data, total] = await Promise.all([
+          this.prisma.user.findMany({
+            skip,
+            take: limit,
+            orderBy: { xp: 'desc' },
+            select: { id: true, username: true, avatarUrl: true, xp: true, level: true },
+          }),
+          this.prisma.user.count(),
+        ]);
+
+        return {
+          data: data.map((user, idx) => ({ ...user, rank: skip + idx + 1 })),
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        };
+      },
+      300 // 5 minutes cache
+    );
   }
 
   async getUserAchievements(userId: string) {

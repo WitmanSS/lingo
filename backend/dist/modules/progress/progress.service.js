@@ -12,13 +12,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProgressService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../core/database/prisma.service");
-const xp_service_1 = require("../gamification/xp.service");
 let ProgressService = class ProgressService {
     prisma;
-    xpService;
-    constructor(prisma, xpService) {
+    constructor(prisma) {
         this.prisma = prisma;
-        this.xpService = xpService;
     }
     async getProgress(userId, storyId) {
         return this.prisma.readingProgress.findUnique({
@@ -59,7 +56,10 @@ let ProgressService = class ProgressService {
             });
         }
         if (completed) {
-            await this.xpService.grantXp(userId, xp_service_1.XpReason.READ_STORY, undefined, data.storyId);
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: { xp: { increment: 50 } },
+            });
         }
         return progress;
     }
@@ -67,7 +67,6 @@ let ProgressService = class ProgressService {
 exports.ProgressService = ProgressService;
 exports.ProgressService = ProgressService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        xp_service_1.XpService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], ProgressService);
 //# sourceMappingURL=progress.service.js.map

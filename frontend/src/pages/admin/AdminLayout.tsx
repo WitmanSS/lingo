@@ -1,7 +1,6 @@
-
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, BookOpen, ShieldAlert, BarChart3, Activity, ArrowLeft } from 'lucide-react';
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarInset } from '@/components/ui/sidebar';
 
 const ADMIN_LINKS = [
   { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -16,7 +15,7 @@ export default function AdminLayout() {
   const location = useLocation();
 
   return (
-    <div className="flex bg-slate-50 min-h-screen">
+    <SidebarProvider>
       <Sidebar>
         <SidebarContent>
           <SidebarGroup>
@@ -45,8 +44,8 @@ export default function AdminLayout() {
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link to="/" className="flex items-center gap-3 py-2 px-3 text-muted-foreground hover:text-foreground">
-                      <ArrowLeft className="w-5 h-5" />
-                      <span>Back to App</span>
+                       <ArrowLeft className="w-5 h-5" />
+                       <span>Back to App</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -55,9 +54,11 @@ export default function AdminLayout() {
         </SidebarContent>
       </Sidebar>
 
-      <main className="flex-1 overflow-y-auto p-8">
-        <Outlet />
-      </main>
-    </div>
+      <SidebarInset className="bg-slate-50 w-full overflow-y-auto min-h-screen">
+        <main className="flex-1 w-full p-8 max-w-[100vw] overflow-x-hidden">
+          <Outlet />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

@@ -18,7 +18,15 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
     authService;
     constructor(authService) {
         super({
-            jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
+            jwtFromRequest: passport_jwt_1.ExtractJwt.fromExtractors([
+                (request) => {
+                    let data = request?.cookies?.['accessToken'];
+                    if (!data) {
+                        return null;
+                    }
+                    return data;
+                },
+            ]),
             ignoreExpiration: false,
             secretOrKey: process.env.JWT_SECRET || 'dev-secret-key',
         });

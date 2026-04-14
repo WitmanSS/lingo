@@ -15,8 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VocabularyController = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_guard_1 = require("../../common/guards/jwt.guard");
-const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
-const public_decorator_1 = require("../../common/decorators/public.decorator");
+const current_user_decorator_1 = require("../../auth/decorators/current-user.decorator");
+const public_decorator_1 = require("../../auth/decorators/public.decorator");
 const vocabulary_service_1 = require("./vocabulary.service");
 let VocabularyController = class VocabularyController {
     vocabularyService;

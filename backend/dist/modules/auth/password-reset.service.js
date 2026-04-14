@@ -46,22 +46,68 @@ exports.PasswordResetService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../core/database/prisma.service");
 const crypto = __importStar(require("crypto"));
+const bcrypt = __importStar(require("bcrypt"));
 let PasswordResetService = class PasswordResetService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async createResetToken(userId) {
+    async createResetToken(email) {
+        const user = await this.prisma.user.findUnique({
+            where: { email }
+        });
+        if (!user) {
+            await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+            return 'If an account with this email exists, a reset link has been sent.';
+        }
+        await this.prisma.passwordReset.deleteMany({
+            where: {
+                userId: user.id,
+                expiresAt: { lt: new Date() }
+            }
+        });
         const token = crypto.randomBytes(32).toString('hex');
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+        await this.prisma.passwordReset.create({
+            data: {
+                userId: user.id,
+                token: hashedToken,
+                expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+            },
+        });
         return token;
     }
     async verifyResetToken(token) {
         const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-        return true;
+        const resetRecord = await this.prisma.passwordReset.findFirst({
+            where: {
+                token: hashedToken,
+                used: false,
+                expiresAt: { gt: new Date() }
+            },
+            include: { user: true }
+        });
+        if (!resetRecord) {
+            throw new common_1.BadRequestException('Invalid or expired reset token');
+        }
+        return resetRecord.userId;
     }
     async resetPassword(token, newPassword) {
-        return { success: true };
+        const userId = await this.verifyResetToken(token);
+        if (!userId) {
+            throw new common_1.BadRequestException('Invalid or expired reset token');
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 12);
+        await this.prisma.$transaction([
+            this.prisma.user.update({
+                where: { id: userId },
+                data: { passwordHash: hashedPassword }
+            }),
+            this.prisma.passwordReset.updateMany({
+                where: { userId, used: false },
+                data: { used: true }
+            })
+        ]);
     }
 };
 exports.PasswordResetService = PasswordResetService;

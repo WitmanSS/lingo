@@ -24,18 +24,10 @@ const response_interceptor_1 = require("./common/interceptors/response.intercept
 const jwt_guard_1 = require("./common/guards/jwt.guard");
 const roles_guard_1 = require("./common/guards/roles.guard");
 const health_controller_1 = require("./core/health/health.controller");
-const auth_module_1 = require("./modules/auth/auth.module");
-const users_module_1 = require("./modules/users/users.module");
-const stories_module_1 = require("./modules/stories/stories.module");
-const admin_module_1 = require("./modules/admin/admin.module");
-const notifications_module_1 = require("./modules/notifications/notifications.module");
-const vocabulary_module_1 = require("./modules/vocabulary/vocabulary.module");
-const gamification_module_1 = require("./modules/gamification/gamification.module");
-const analytics_module_1 = require("./modules/analytics/analytics.module");
-const bookmarks_module_1 = require("./modules/bookmarks/bookmarks.module");
-const favorites_module_1 = require("./modules/favorites/favorites.module");
-const progress_module_1 = require("./modules/progress/progress.module");
-const quizzes_module_1 = require("./modules/quizzes/quizzes.module");
+const domain_module_1 = require("./domain/domain.module");
+const application_module_1 = require("./application/application.module");
+const infrastructure_module_1 = require("./infrastructure/infrastructure.module");
+const presentation_module_1 = require("./presentation/presentation.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -54,18 +46,10 @@ exports.AppModule = AppModule = __decorate([
             ai_module_1.AIModule,
             payment_module_1.PaymentModule,
             search_module_1.SearchModule,
-            auth_module_1.AuthModule,
-            users_module_1.UsersModule,
-            stories_module_1.StoriesModule,
-            admin_module_1.AdminModule,
-            notifications_module_1.NotificationsModule,
-            vocabulary_module_1.VocabularyModule,
-            gamification_module_1.GamificationModule,
-            analytics_module_1.AnalyticsModule,
-            bookmarks_module_1.BookmarksModule,
-            favorites_module_1.FavoritesModule,
-            progress_module_1.ProgressModule,
-            quizzes_module_1.QuizzesModule,
+            domain_module_1.DomainModule,
+            application_module_1.ApplicationModule,
+            infrastructure_module_1.InfrastructureModule,
+            presentation_module_1.PresentationModule,
         ],
         controllers: [health_controller_1.HealthController],
         providers: [

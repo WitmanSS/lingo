@@ -6,36 +6,7 @@ export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
-});
-
-// Token management
-let accessToken: string | null = localStorage.getItem('accessToken');
-let refreshToken: string | null = localStorage.getItem('refreshToken');
-
-export function setTokens(access: string, refresh: string) {
-  accessToken = access;
-  refreshToken = refresh;
-  localStorage.setItem('accessToken', access);
-  localStorage.setItem('refreshToken', refresh);
-}
-
-export function clearTokens() {
-  accessToken = null;
-  refreshToken = null;
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-}
-
-export function getAccessToken() {
-  return accessToken;
-}
-
-// Request interceptor — attach JWT
-api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  if (accessToken && config.headers) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
-  }
-  return config;
+  withCredentials: true,
 });
 
 // Response interceptor — unwrap { success, data } envelope
@@ -50,16 +21,13 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Handle 401 with token refresh
-    if (error.response?.status === 401 && !originalRequest._retry && refreshToken) {
+    // Handle 401 with token refresh using secure cookies
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && originalRequest.url !== '/auth/login' && originalRequest.url !== '/auth/register' && originalRequest.url !== '/auth/refresh') {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({
-            resolve: (token: string) => {
-              originalRequest.headers.Authorization = `Bearer ${token}`;
-              resolve(api(originalRequest));
-            },
-            reject,
+            resolve: () => resolve(api(originalRequest)),
+            reject: (err: unknown) => reject(err),
           });
         });
       }
@@ -69,22 +37,15 @@ api.interceptors.response.use(
 
       try {
         // Use raw axios to avoid interceptors loop
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refreshToken,
-        });
+        await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
 
-        // Backend wraps in { success, data } envelope
-        const responseData = response.data?.data || response.data;
-        const { accessToken: newAccess, refreshToken: newRefresh } = responseData;
-
-        setTokens(newAccess, newRefresh);
-        processQueue(null, newAccess);
-        originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+        // If refresh successful, backend has set new cookies. We can retry the request.
+        processQueue(null);
         return api(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
-        clearTokens();
-        // Don't force redirect — let the app handle it
+        processQueue(refreshError);
+        // Dispatch an event so the auth-store can catch it and log out
+        window.dispatchEvent(new Event('auth:unauthorized'));
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -98,16 +59,16 @@ api.interceptors.response.use(
 // Refresh token queue management
 let isRefreshing = false;
 let failedQueue: Array<{
-  resolve: (token: string) => void;
+  resolve: () => void;
   reject: (err: unknown) => void;
 }> = [];
 
-function processQueue(error: unknown, token: string | null = null) {
+function processQueue(error: unknown) {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token!);
+      prom.resolve();
     }
   });
   failedQueue = [];

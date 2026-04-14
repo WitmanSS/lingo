@@ -1,14 +1,16 @@
 import { PrismaService } from '../../core/database/prisma.service';
-import { CreateStoryDto, UpdateStoryDto, QueryStoriesDto } from './dto';
-import { XpService } from '../gamification/xp.service';
-import { ModerationPriorityService } from '../admin/moderation-priority.service';
+import { Level } from '@prisma/client';
 export declare class StoriesService {
     private prisma;
-    private xpService;
-    private moderationPriorityService;
-    private readonly logger;
-    constructor(prisma: PrismaService, xpService: XpService, moderationPriorityService: ModerationPriorityService);
-    findAll(params: QueryStoriesDto): Promise<{
+    constructor(prisma: PrismaService);
+    findAll(params: {
+        page?: number;
+        limit?: number;
+        level?: Level;
+        tag?: string;
+        search?: string;
+        sort?: string;
+    }): Promise<{
         data: {
             tags: {
                 id: string;
@@ -16,34 +18,20 @@ export declare class StoriesService {
             }[];
             id: string;
             createdAt: Date;
-            updatedAt: Date;
-            _count: {
-                favorites: number;
-                comments: number;
-                ratings: number;
-            };
             level: import(".prisma/client").$Enums.Level;
             title: string;
             slug: string;
-            difficultyScore: number | null;
             readingTimeMinutes: number;
             wordCount: number;
             coverImage: string | null;
-            isAIGenerated: boolean;
             author: {
-                id: string;
                 username: string;
-                avatarUrl: string | null;
             };
         }[];
-        meta: {
-            total: number;
-            page: number;
-            limit: number;
-            totalPages: number;
-            hasNextPage: boolean;
-            hasPrevPage: boolean;
-        };
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
     }>;
     findBySlug(slug: string): Promise<{
         tags: {
@@ -61,47 +49,11 @@ export declare class StoriesService {
             phonetic: string | null;
             audioUrl: string | null;
         }[];
-        _count: {
-            favorites: number;
-            comments: number;
-            ratings: number;
-        };
         author: {
             id: string;
             username: string;
             avatarUrl: string | null;
         };
-        content: {
-            id: string;
-            content: string;
-            storyId: string;
-        } | null;
-        chapters: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            title: string;
-            wordCount: number;
-            content: string;
-            storyId: string;
-            order: number;
-        }[];
-        translations: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            title: string;
-            content: string;
-            storyId: string;
-            languageCode: string;
-        }[];
-        audio: {
-            id: string;
-            createdAt: Date;
-            audioUrl: string;
-            storyId: string;
-            duration: number;
-        } | null;
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -117,15 +69,27 @@ export declare class StoriesService {
         isAIGenerated: boolean;
         deletedAt: Date | null;
     }>;
-    create(authorId: string, dto: CreateStoryDto): Promise<{
-        tags: {
-            id: string;
-            name: string;
-        }[];
+    createByUsername(data: {
+        username: string;
+        title: string;
+        content: string;
+        level: Level;
+        coverImage?: string;
+        tagIds?: string[];
+    }): Promise<{
         author: {
-            id: string;
             username: string;
         };
+        tags: ({
+            tag: {
+                id: string;
+                name: string;
+            };
+        } & {
+            storyId: string;
+            tagId: string;
+        })[];
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -141,15 +105,49 @@ export declare class StoriesService {
         isAIGenerated: boolean;
         deletedAt: Date | null;
     }>;
-    update(id: string, dto: UpdateStoryDto): Promise<{
-        tags: {
-            id: string;
-            name: string;
-        }[];
+    create(authorId: string, data: {
+        title: string;
+        content: string;
+        level: Level;
+        coverImage?: string;
+        tagIds?: string[];
+    }): Promise<{
         author: {
-            id: string;
             username: string;
         };
+        tags: ({
+            tag: {
+                id: string;
+                name: string;
+            };
+        } & {
+            storyId: string;
+            tagId: string;
+        })[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        level: import(".prisma/client").$Enums.Level;
+        title: string;
+        slug: string;
+        difficultyScore: number | null;
+        readingTimeMinutes: number;
+        wordCount: number;
+        coverImage: string | null;
+        authorId: string;
+        published: boolean;
+        isAIGenerated: boolean;
+        deletedAt: Date | null;
+    }>;
+    update(id: string, data: Partial<{
+        title: string;
+        content: string;
+        level: Level;
+        coverImage: string;
+        published: boolean;
+        tagIds: string[];
+    }>): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -169,4 +167,8 @@ export declare class StoriesService {
         message: string;
     }>;
     private generateSlug;
+    searchStories(query: string, options?: {
+        limit?: number;
+        offset?: number;
+    }): Promise<unknown>;
 }

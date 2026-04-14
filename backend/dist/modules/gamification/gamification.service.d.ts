@@ -1,7 +1,9 @@
 import { PrismaService } from '../../core/database/prisma.service';
+import { CacheService } from '../../core/cache/cache.service';
 export declare class GamificationService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private cacheService;
+    constructor(prisma: PrismaService, cacheService: CacheService);
     getLeaderboard(page?: number, limit?: number): Promise<{
         data: {
             rank: number;

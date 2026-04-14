@@ -24,14 +24,15 @@ export declare class AuthRepository {
         userAgent: string | null;
         createdAt: Date;
         userId: string;
-        token: string;
         expiresAt: Date;
+        token: string;
         deviceId: string | null;
     }>;
     findSessionByToken(token: string): Promise<({
         user: {
             id: string;
             createdAt: Date;
+            updatedAt: Date;
             level: number;
             deletedAt: Date | null;
             username: string;
@@ -46,6 +47,7 @@ export declare class AuthRepository {
             lastLoginAt: Date | null;
             emailVerified: boolean;
             twoFactorEnabled: boolean;
+            twoFactorSecret: string | null;
         };
     } & {
         id: string;
@@ -53,8 +55,8 @@ export declare class AuthRepository {
         userAgent: string | null;
         createdAt: Date;
         userId: string;
-        token: string;
         expiresAt: Date;
+        token: string;
         deviceId: string | null;
     }) | null>;
     invalidateUserSessions(userId: string): Promise<void>;

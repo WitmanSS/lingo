@@ -5,6 +5,10 @@ export declare class RedisService implements OnModuleDestroy {
     private configService;
     private redis;
     constructor(configService: AppConfigService);
+    getClient(): Redis;
+    zrevrange(key: string, start: number, stop: number, withScores?: boolean): Promise<string[]>;
+    incrby(key: string, amount: number): Promise<number>;
+    pipeline(): any;
     onModuleDestroy(): Promise<void>;
     get(key: string): Promise<string | null>;
     set(key: string, value: string, ttl?: number): Promise<void>;
@@ -15,9 +19,4 @@ export declare class RedisService implements OnModuleDestroy {
     hget(key: string, field: string): Promise<string | null>;
     hset(key: string, field: string, value: string): Promise<void>;
     hdel(key: string, field: string): Promise<void>;
-    zadd(key: string, score: number, member: string): Promise<void>;
-    zrevrange(key: string, start: number, stop: number, withScores?: boolean): Promise<string[]>;
-    zrevrank(key: string, member: string): Promise<number | null>;
-    zscore(key: string, member: string): Promise<string | null>;
-    getClient(): Redis;
 }

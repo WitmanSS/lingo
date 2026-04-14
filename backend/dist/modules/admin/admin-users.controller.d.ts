@@ -40,13 +40,14 @@ export declare class AdminUsersController {
             id: string;
             createdAt: Date;
             userId: string;
-            expiresAt: Date | null;
             reason: string;
             adminId: string;
+            expiresAt: Date | null;
         }[];
     } & {
         id: string;
         createdAt: Date;
+        updatedAt: Date;
         level: number;
         deletedAt: Date | null;
         username: string;
@@ -61,10 +62,12 @@ export declare class AdminUsersController {
         lastLoginAt: Date | null;
         emailVerified: boolean;
         twoFactorEnabled: boolean;
+        twoFactorSecret: string | null;
     }>;
     blockUser(userId: string, reason: string, admin: any): Promise<{
         id: string;
         createdAt: Date;
+        updatedAt: Date;
         level: number;
         deletedAt: Date | null;
         username: string;
@@ -79,6 +82,7 @@ export declare class AdminUsersController {
         lastLoginAt: Date | null;
         emailVerified: boolean;
         twoFactorEnabled: boolean;
+        twoFactorSecret: string | null;
     }>;
     warnUser(userId: string, reason: string, admin: any): Promise<{
         id: string;

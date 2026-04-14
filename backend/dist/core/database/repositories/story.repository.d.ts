@@ -48,6 +48,7 @@ export declare class StoryRepository {
         author: {
             id: string;
             createdAt: Date;
+            updatedAt: Date;
             level: number;
             deletedAt: Date | null;
             username: string;
@@ -62,6 +63,7 @@ export declare class StoryRepository {
             lastLoginAt: Date | null;
             emailVerified: boolean;
             twoFactorEnabled: boolean;
+            twoFactorSecret: string | null;
         };
         content: {
             id: string;

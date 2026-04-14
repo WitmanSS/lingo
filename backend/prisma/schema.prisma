@@ -54,9 +54,11 @@ model User {
   streakDays   Int       @default(0) @map("streak_days")
   lastActiveAt DateTime? @map("last_active_at")
   createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
   lastLoginAt  DateTime? @map("last_login_at")
   emailVerified Boolean  @default(false) @map("email_verified")
   twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
+  twoFactorSecret String? @map("two_factor_secret") // 2FA secret for TOTP
   deletedAt    DateTime? @map("deleted_at") // Soft delete
 
   // Relations
@@ -87,6 +89,7 @@ model User {
   warnings        UserWarning[]
   blocks          UserBlock[]
   storyReports    StoryReport[]
+  passwordResets  PasswordReset[]
 
   @@index([email])
   @@index([username])
@@ -166,6 +169,22 @@ model Device {
   @@index([userId])
   @@index([deviceId])
   @@map("devices")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_resets")
 }
 
 // ─── Stories ────────────────────────────────────────

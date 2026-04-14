@@ -36,6 +36,7 @@ export class SessionService {
   }
 
   private generateToken(): string {
-    return Math.random().toString(36).substr(2) + Date.now().toString(36);
+    // Use crypto.randomBytes for cryptographically secure tokens
+    return require('crypto').randomBytes(32).toString('hex');
   }
 }

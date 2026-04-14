@@ -1,17 +1,15 @@
 import { PrismaService } from '../../core/database/prisma.service';
-import { XpService } from '../gamification/xp.service';
 export declare class ProgressService {
     private prisma;
-    private xpService;
-    constructor(prisma: PrismaService, xpService: XpService);
+    constructor(prisma: PrismaService);
     getProgress(userId: string, storyId: string): Promise<{
         id: string;
         userId: string;
         updatedAt: Date;
         storyId: string;
+        completed: boolean;
         progressPercentage: number;
         lastPosition: number;
-        completed: boolean;
         readingTimeSeconds: number;
         startedAt: Date;
         completedAt: Date | null;
@@ -26,9 +24,9 @@ export declare class ProgressService {
         userId: string;
         updatedAt: Date;
         storyId: string;
+        completed: boolean;
         progressPercentage: number;
         lastPosition: number;
-        completed: boolean;
         readingTimeSeconds: number;
         startedAt: Date;
         completedAt: Date | null;

@@ -1,22 +1,37 @@
 import { Injectable } from '@nestjs/common';
+import * as speakeasy from 'speakeasy';
+import * as qrcode from 'qrcode';
 
 @Injectable()
 export class TwoFactorService {
-  generateSecret() {
-    // TODO: Implement TOTP secret generation using speakeasy or similar
+  async generateSecret(userId: string): Promise<{ secret: string; qrCode: string }> {
+    const secret = speakeasy.generateSecret({
+      name: `Lingo (${userId})`,
+      issuer: 'Lingo App'
+    });
+
+    const qrCode = await qrcode.toDataURL(secret.otpauth_url);
+
     return {
-      secret: 'JBSWY3DPEBLW64TMMQ======',
-      qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=',
+      secret: secret.base32,
+      qrCode
     };
   }
 
   verifyToken(secret: string, token: string): boolean {
-    // TODO: Implement TOTP verification
-    return true;
+    return speakeasy.totp.verify({
+      secret: secret,
+      encoding: 'base32',
+      token: token,
+      window: 2 // Allow 2 time windows (30 seconds each) for clock skew
+    });
   }
 
-  resendBackupCodes() {
-    // TODO: Generate and send backup codes
-    return ['12345-67890', '12345-67890', '12345-67890'];
+  generateBackupCodes(): string[] {
+    const codes = [];
+    for (let i = 0; i < 10; i++) {
+      codes.push(Math.random().toString(36).substr(2, 8).toUpperCase());
+    }
+    return codes;
   }
 }

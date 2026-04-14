@@ -1,13 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../core/database/prisma.service';
-import { XpService, XpReason } from '../gamification/xp.service';
 
 @Injectable()
 export class ProgressService {
-  constructor(
-    private prisma: PrismaService,
-    private xpService: XpService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async getProgress(userId: string, storyId: string) {
     return this.prisma.readingProgress.findUnique({
@@ -59,7 +55,10 @@ export class ProgressService {
 
     // Award XP for completion
     if (completed) {
-      await this.xpService.grantXp(userId, XpReason.READ_STORY, undefined, data.storyId);
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { xp: { increment: 50 } },
+      });
     }
 
     return progress;

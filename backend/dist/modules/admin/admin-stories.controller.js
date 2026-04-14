@@ -16,6 +16,9 @@ exports.AdminStoriesController = void 0;
 const common_1 = require("@nestjs/common");
 const admin_stories_service_1 = require("./admin-stories.service");
 const admin_guard_1 = require("../../common/guards/admin.guard");
+const roles_guard_1 = require("../../common/guards/roles.guard");
+const roles_decorator_1 = require("../../common/decorators/roles.decorator");
+const client_1 = require("@prisma/client");
 let AdminStoriesController = class AdminStoriesController {
     storiesService;
     constructor(storiesService) {
@@ -69,7 +72,8 @@ __decorate([
 ], AdminStoriesController.prototype, "dismissReport", null);
 exports.AdminStoriesController = AdminStoriesController = __decorate([
     (0, common_1.Controller)('admin/stories'),
-    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.MODERATOR),
     __metadata("design:paramtypes", [admin_stories_service_1.AdminStoriesService])
 ], AdminStoriesController);
 //# sourceMappingURL=admin-stories.controller.js.map

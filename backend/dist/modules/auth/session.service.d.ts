@@ -8,8 +8,8 @@ export declare class SessionService {
         userAgent: string | null;
         createdAt: Date;
         userId: string;
-        token: string;
         expiresAt: Date;
+        token: string;
         deviceId: string | null;
     }>;
     getSession(sessionId: string): Promise<{
@@ -18,8 +18,8 @@ export declare class SessionService {
         userAgent: string | null;
         createdAt: Date;
         userId: string;
-        token: string;
         expiresAt: Date;
+        token: string;
         deviceId: string | null;
     } | null>;
     deleteSessions(userId: string): Promise<void>;
